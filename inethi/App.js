@@ -1,8 +1,8 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeRouter, Route, Routes } from 'react-router-native';
-import HomePage from './pages/HomePage'; // Assuming you have a HomePage component
-import AppBarComponent from './components/AppBarComponent'; // AppBar component to be created
+import HomePage from './pages/HomePage';
+import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
 const App = () => (
   <SafeAreaProvider>
