@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { Button, Card, Title } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 
@@ -69,6 +69,11 @@ const HomePage = () => {
 
   return (
     <View style={styles.container}>
+    <View style={styles.logoContainer}>
+                    <Image
+                        source={require('../assets/images/inethi-logo-large.png')}
+                    />
+                </View>
       {renderCategoryCards()}
     </View>
   );
@@ -84,6 +89,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 8,
+    color: '#4285F4',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -93,7 +99,20 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 4,
+    backgroundColor: '#4285F4',
   },
+  buttonText: {
+          color: '#FFFFFF',
+   },
+   logoContainer: {
+           alignItems: 'center',
+           marginVertical: 10, // Adjust spacing around the logo as needed
+       },
+  logo: {
+          width: 100,
+          height: 100,
+          resizeMode: 'contain',
+      },
 });
 
 export default HomePage;
