@@ -2,14 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Button, Card, Title } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
+import { Linking } from 'react-native';
+import UploadModal from '../components/UploadModal';
 
 const HomePage = () => {
     const navigate = useNavigate();
-  const [categories, setCategories] = useState({
-    Utility: [],
-    Education: [],
-    Entertainment: [],
-  });
+    const [categories, setCategories] = useState({
+      Wallet: [
+        { name: "Generate", action: () => Linking.openURL('https://sarafu.network') },
+        { name: "Connect Wallet", action: () => setIsModalVisible(true) },
+      ],
+    });
+    const [isModalVisible, setIsModalVisible] = useState(false);
+
+// Handling success and error from upload
+const handleUploadSuccess = (result) => {
+  console.log('Upload success:', result);
+  setIsModalVisible(false);
+};
+
+const handleUploadError = (error) => {
+  console.error('Upload failed:', error);
+};
 
 
   useEffect(() => {
@@ -29,8 +43,24 @@ const HomePage = () => {
           { name: "Video", url: "https://jellyfin.inethicloud.net" },
         ],
       };
-      setCategories(apiResponse);
-    };
+      // Merge the API response with the existing state
+    setCategories((prevState) => {
+      // Create a new object to avoid direct mutation of state
+      const newState = { ...prevState };
+
+      Object.keys(apiResponse).forEach((category) => {
+        // If the category already exists, append the new items to it
+        if (newState[category]) {
+          newState[category] = [...newState[category], ...apiResponse[category]];
+        } else {
+          // Otherwise, just add the new category from the API response
+          newState[category] = apiResponse[category];
+        }
+      });
+
+      return newState;
+    });
+  };
 
     fetchButtonData();
   }, []);
@@ -45,16 +75,31 @@ const HomePage = () => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, url }, idx) => (
-            <Button key={idx} mode="contained" onPress={() => openURL(url)} style={styles.button}>
-                {name}
+          {pair.map(({ name, action, url }, idx) => (
+            <Button
+              key={idx}
+              mode="contained"
+              onPress={() => {
+                if (action) {
+                  action();
+                } else if (url) {
+                  openURL(url);
+                } else {
+                  console.error('Button has no action or URL');
+                }
+              }}
+              style={styles.button}
+            >
+              {name}
             </Button>
-            ))}
+          ))}
         </View>
       );
     }
     return buttonRows;
   };
+  
+  
 
   const renderCategoryCards = () => (
     Object.entries(categories).map(([category, buttons], index) => (
@@ -69,17 +114,28 @@ const HomePage = () => {
 
   return (
     <View style={styles.container}>
+
     <View style={styles.logoContainer}>
-                    <Image
-                        source={require('../assets/images/inethi-logo-large.png')}
-                    />
-                </View>
-      {renderCategoryCards()}
+      <Image
+        source={require('../assets/images/inethi-logo-large.png')}
+      />
+    </View>
+    <UploadModal
+  isVisible={isModalVisible}
+  onDismiss={() => setIsModalVisible(false)}
+  onSuccess={handleUploadSuccess}
+  onError={handleUploadError}
+/>
+
+     
+    {renderCategoryCards()}
+
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  
   container: {
     flex: 1,
     padding: 10,
@@ -106,7 +162,7 @@ const styles = StyleSheet.create({
    },
    logoContainer: {
            alignItems: 'center',
-           marginVertical: 10, // Adjust spacing around the logo as needed
+           marginVertical: 10,
        },
   logo: {
           width: 100,
