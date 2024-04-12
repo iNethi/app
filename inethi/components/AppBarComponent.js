@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Appbar } from 'react-native-paper';
 import { View, Text, StyleSheet } from 'react-native';
 
-const AppBarComponent = () => {
+const AppBarComponent = ({ logout }) => {
   const [balance, setBalance] = useState('Loading...');
 
   useEffect(() => {
@@ -60,6 +60,7 @@ const AppBarComponent = () => {
           <Text style={styles.text}>Data: 1GB</Text>
           <Text style={styles.text}>Time: 12:00</Text>
         </View>
+        <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
       </View>
     </Appbar.Header>
   );

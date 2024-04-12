@@ -4,6 +4,8 @@ import { Button, Card, Title } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import { Linking } from 'react-native';
 import UploadModal from '../components/UploadModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -14,55 +16,100 @@ const HomePage = () => {
       ],
     });
     const [isModalVisible, setIsModalVisible] = useState(false);
+  const [error, setError] = useState('');
+
+
 
 // Handling success and error from upload
-const handleUploadSuccess = (result) => {
-  console.log('Upload success:', result);
-  setIsModalVisible(false);
-};
+  const handleUploadSuccess = (result) => {
+    console.log('Upload success:', result);
+    setIsModalVisible(false);
+  };
 
-const handleUploadError = (error) => {
-  console.error('Upload failed:', error);
-};
+  const handleUploadError = (error) => {
+    console.error('Upload failed:', error);
+  };
+  const storeToken = async (token, expiresIn) => {
+    const expiryDate = new Date().getTime() + expiresIn * 1000;
+    await AsyncStorage.setItem('userToken', token);
+    await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
+  };
+  const isTokenExpired = async () => {
+    const expiryDate = await AsyncStorage.getItem('tokenExpiry');
+    return new Date().getTime() > parseInt(expiryDate);
+  };
+  const refreshToken = async () => {
+    try {
+      const refreshToken = await AsyncStorage.getItem('refreshToken'); // Retrieve the refresh token from storage
+      if (!refreshToken) throw new Error("No refresh token available");
 
-
-  useEffect(() => {
-    const fetchButtonData = async () => {
-
-      const apiResponse = {
-        Utility: [
-          { name: "Splash", url: "https://splash.inethicloud.net" },
-          { name: "Nextcloud", url: "https://nextcloud.inethicloud.net" },
-          { name: "Vouchers", url: "https://vouchers.inethicloud.net" },
-        ],
-        Education: [
-          { name: "Wikipedia", url: "https://wikipedia.org" },
-          { name: "Khan Academy", url: "https://khanacademy.org" },
-        ],
-        Entertainment: [
-          { name: "Video", url: "https://jellyfin.inethicloud.net" },
-        ],
-      };
-      // Merge the API response with the existing state
-    setCategories((prevState) => {
-      // Create a new object to avoid direct mutation of state
-      const newState = { ...prevState };
-
-      Object.keys(apiResponse).forEach((category) => {
-        // If the category already exists, append the new items to it
-        if (newState[category]) {
-          newState[category] = [...newState[category], ...apiResponse[category]];
-        } else {
-          // Otherwise, just add the new category from the API response
-          newState[category] = apiResponse[category];
+      const response = await axios.post('https://keycloak.inethilocal.net/auth/realms/inethi-global-services/protocol/openid-connect/token', {
+        client_id: 'inethi-app',
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
       });
 
-      return newState;
-    });
+      const { access_token, expires_in, refresh_token: newRefreshToken } = response.data;
+      await storeToken(access_token, expires_in);
+      await AsyncStorage.setItem('refreshToken', newRefreshToken);
+
+      return access_token;
+    } catch (error) {
+      console.error('Refresh Token Error:', error);
+      throw new Error('Failed to refresh token');
+    }
   };
 
-    fetchButtonData();
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        let token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          setError('Authentication token not found');
+          return;
+        }
+        if (await isTokenExpired()) {
+          try {
+            token = await refreshToken();
+          } catch (refreshError) {
+            setError('Failed to refresh token: ' + refreshError.message);
+            return;
+          }
+        }
+
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        };
+
+        const response = await axios.get('http://10.0.2.2:8000/service/list-by-type/', config);
+        console.log('API Service Response:', response.data);
+
+        // Assuming response.data.data is an object with keys as category names and values as arrays
+        const fetchedCategories = {};
+        Object.entries(response.data.data).forEach(([category, services]) => {
+          fetchedCategories[category] = services.map(service => ({
+            name: service.name,
+            url: service.url,
+            action: () => navigate('/webview', { state: { url: service.url } })
+          }));
+        });
+
+        setCategories(fetchedCategories);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError('Failed to fetch services: ' + err.message);
+      }
+    };
+
+
+    fetchServices();
   }, []);
 
   const openURL = (url) => {
