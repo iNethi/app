@@ -7,17 +7,17 @@ import UploadModal from '../components/UploadModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const HomePage = () => {
+const HomePage = ({ logout }) => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState({
       Wallet: [
         { name: "Generate", action: () => Linking.openURL('https://sarafu.network') },
         { name: "Connect Wallet", action: () => setIsModalVisible(true) },
+        { name: "Pay", action: () => navigate('/payment') },
       ],
     });
     const [isModalVisible, setIsModalVisible] = useState(false);
   const [error, setError] = useState('');
-
 
 
 // Handling success and error from upload
@@ -60,6 +60,7 @@ const HomePage = () => {
       return access_token;
     } catch (error) {
       console.error('Refresh Token Error:', error);
+
       throw new Error('Failed to refresh token');
     }
   };
@@ -69,13 +70,19 @@ const HomePage = () => {
     const fetchServices = async () => {
       try {
         let token = await AsyncStorage.getItem('userToken');
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        // console.log(refreshToken)
         if (!token) {
           setError('Authentication token not found');
+
           return;
         }
         if (await isTokenExpired()) {
           try {
-            token = await refreshToken();
+            // token = await refreshToken();
+            console.log('token expired')
+            logout()
+            return;
           } catch (refreshError) {
             setError('Failed to refresh token: ' + refreshError.message);
             return;
@@ -91,7 +98,7 @@ const HomePage = () => {
         const response = await axios.get('http://10.0.2.2:8000/service/list-by-type/', config);
         console.log('API Service Response:', response.data);
 
-        // Assuming response.data.data is an object with keys as category names and values as arrays
+        // response.data.data is an object with keys as category names and values as arrays
         const fetchedCategories = {};
         Object.entries(response.data.data).forEach(([category, services]) => {
           fetchedCategories[category] = services.map(service => ({
@@ -101,7 +108,11 @@ const HomePage = () => {
           }));
         });
 
-        setCategories(fetchedCategories);
+        // Ensure Wallet category is always present
+        setCategories(prevCategories => ({
+          Wallet: prevCategories.Wallet,
+          ...fetchedCategories
+        }));
       } catch (err) {
         console.error('Error fetching services:', err);
         setError('Failed to fetch services: ' + err.message);

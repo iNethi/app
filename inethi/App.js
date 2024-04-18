@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
+import PaymentPage from "./pages/PaymentPage";
 
 const App = () => {
     const [userToken, setUserToken] = useState(null);
@@ -42,7 +43,8 @@ const App = () => {
                     <Routes>
                         {userToken ? (
                             <>
-                                <Route exact path="/" element={<HomePage/>} />
+                                <Route exact path="/" element={<HomePage logout={logout}/>} />
+                                <Route path="/payment" element={<PaymentPage />}/>
                                 <Route path="/webview" element={<WebViewComponent />}/>
                             </>
                         ) : (
