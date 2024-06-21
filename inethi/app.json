@@ -1,4 +1,12 @@
 {
   "name": "inethi",
-  "displayName": "inethi"
+  "displayName": "inethi",
+  "plugins": [
+    [
+      "@rnmapbox/maps",
+      {
+        "RNMapboxMapsDownloadToken": "sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw"
+      }
+    ]
+  ]
 }

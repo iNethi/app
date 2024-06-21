@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeRouter, Route, Routes } from 'react-router-native';
 import { Provider as PaperProvider } from 'react-native-paper';
+import MapPage from './pages/MapPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
@@ -19,6 +20,7 @@ const App = () => {
         };
         loadToken();
     }, []);
+
     const logout = async () => {
         await AsyncStorage.removeItem('userToken');
         await AsyncStorage.removeItem('tokenExpiry');
@@ -34,21 +36,21 @@ const App = () => {
         setUserToken(token);
     };
 
-
     return (
         <PaperProvider>
             <SafeAreaProvider>
                 <NativeRouter>
                     <AppBarComponent logout={logout} />
                     <Routes>
+                        <Route exact path="/" element={<MapPage />} />
                         {userToken ? (
                             <>
-                                <Route exact path="/" element={<HomePage logout={logout}/>} />
-                                <Route path="/payment" element={<PaymentPage />}/>
-                                <Route path="/webview" element={<WebViewComponent />}/>
+                                <Route path="/home" element={<HomePage logout={logout} />} />
+                                <Route path="/payment" element={<PaymentPage />} />
+                                <Route path="/webview" element={<WebViewComponent />} />
                             </>
                         ) : (
-                            <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess}/>} />
+                            <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                         )}
                     </Routes>
                 </NativeRouter>
