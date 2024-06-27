@@ -10,7 +10,8 @@ const LoginPage = ({ onLoginSuccess }) => {
 
     const handleLogin = async () => {
         try {
-            const response = await axios.post('https://keycloak.inethilocal.net/realms/inethi-global-services/protocol/openid-connect/token', `client_id=inethi-app&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&grant_type=password&scope=openid offline_access`, {
+
+            const response = await axios.post('https://keycloak.inethicloud.net/realms/inethi-global-services/protocol/openid-connect/token ', `client_id=inethi-app&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&grant_type=password&scope=openid offline_access`, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
@@ -22,6 +23,7 @@ const LoginPage = ({ onLoginSuccess }) => {
                 setError('No access token received');
             }
         } catch (err) {
+            console.log(err)
             setError('Failed to login: ' + err.message);
         }
     };
