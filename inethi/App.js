@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
 import PaymentPage from "./pages/PaymentPage";
+import RegisterPage from "./pages/RegisterPage";
 
 const App = () => {
     const [userToken, setUserToken] = useState(null);
@@ -34,6 +35,10 @@ const App = () => {
         setUserToken(token);
     };
 
+    const handleRegisterSuccess = () => {
+        alert('Registration successful! Please log in.');
+    };
+
 
     return (
         <PaperProvider>
@@ -48,7 +53,10 @@ const App = () => {
                                 <Route path="/webview" element={<WebViewComponent />}/>
                             </>
                         ) : (
-                            <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess}/>} />
+                            <>
+                                <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+                                <Route path="/register" element={<RegisterPage onRegisterSuccess={handleRegisterSuccess} />} />
+                            </>
                         )}
                     </Routes>
                 </NativeRouter>
