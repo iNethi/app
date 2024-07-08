@@ -10,6 +10,7 @@ const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
+  const walletDetailsEndpoint = '/wallet/details/';
   const [hasWallet, setHasWallet] = useState(false);
   const navigate = useNavigate();
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
@@ -17,13 +18,15 @@ const HomePage = ({ logout }) => {
   const [error, setError] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
+  const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [walletDetails, setWalletDetails] = useState(null);
+  const [detailsError, setDetailsError] = useState('');
   const { balance, fetchBalance } = useBalance(); // Destructure balance and fetchBalance
 
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
-      { name: "Check Balance", action: () => setIsBalanceDialogOpen(true), requiresWallet: true },
+      { name: "Check Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
     ],
   });
@@ -111,6 +114,44 @@ const HomePage = ({ logout }) => {
         Alert.alert('Error', `Failed to check wallet ownership: ${error.message}`);
       }
     }
+  };
+
+  const fetchWalletDetails = async () => {
+    setIsLoading(true);
+    try {
+      const token = await getToken();
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+      const response = await axios.get(`${baseURL}${walletDetailsEndpoint}`, config);
+      setWalletDetails(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      if (error.response) {
+        if (error.response.status === 401) {
+          Alert.alert('Error', 'Authentication credentials were not provided.');
+        } else if (error.response.status === 404) {
+          Alert.alert('Error', 'User does not exist.');
+        }else if (error.response.status === 417) {
+          Alert.alert('Error', 'User does not have a wallet.');
+        } else if (error.response.status === 500) {
+          Alert.alert('Error', 'Error checking wallet details. Please contact iNethi support.');
+        } else {
+          Alert.alert('Error', `Failed to check wallet details: ${error.message}`);
+        }
+      } else {
+        Alert.alert('Error', `Failed to check wallet details: ${error.message}`);
+      }
+    }
+  };
+
+  const handleCheckWalletDetails = async () => {
+    await fetchWalletDetails();
+    setIsDetailDialogOpen(true);
   };
 
   useEffect(() => {
@@ -253,13 +294,24 @@ const HomePage = ({ logout }) => {
               <Button onPress={handleCreateWallet}>Create</Button>
             </Dialog.Actions>
           </Dialog>
-          <Dialog visible={isBalanceDialogOpen} onDismiss={() => setIsBalanceDialogOpen(false)}>
-            <Dialog.Title>Wallet Balance</Dialog.Title>
+          <Dialog visible={isBalanceDialogOpen} onDismiss={() => setIsDetailDialogOpen(false)}>
+            <Dialog.Title>Wallet Details</Dialog.Title>
             <Dialog.Content>
-              <Paragraph>Your balance is: {balance}</Paragraph>
+              {isLoading ? (
+                  <ActivityIndicator size="large" />
+              ) : walletDetails ? (
+                  <>
+                    <Paragraph>Wallet Address: {walletDetails.wallet_address}</Paragraph>
+                    <Paragraph>Balance: {walletDetails.balance}</Paragraph>
+                  </>
+              ) : detailsError ? (
+                  <Paragraph>{detailsError}</Paragraph>
+              ) : (
+                  <Paragraph>Failed to load wallet details.</Paragraph>
+              )}
             </Dialog.Content>
             <Dialog.Actions>
-              <Button onPress={() => setIsBalanceDialogOpen(false)}>Close</Button>
+              <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
             </Dialog.Actions>
           </Dialog>
           {isLoading && (
