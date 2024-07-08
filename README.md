@@ -1,7 +1,14 @@
 # iNethi App
 
 ## Prerequisites
-Have keycloak and the management system running
+1. Have keycloak and the management system running.
+2. Have nodejs and npm
+3. Have Java 17. You can manage your java versions with the `update-alternatives` command:
+```
+## Managing Java versions
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+```
 
 ### Keycloak Essentials
 1. Make sure refresh tokes are enabled
@@ -39,3 +46,5 @@ cd android
 ./gradlew assembleRelease
 ```
 4. Install it on connected device (if you have one): `adb install -r android/app/build/outputs/apk/release/app-release.apk` (from root dir) else for two `adb -s AIRKXG7TAMNZWKIB install -r android/app/build/outputs/apk/release/app-release.apk` where 'AIRKXG7TAMNZWKIB' is the device ID (check with `adb devices`)
+
+
