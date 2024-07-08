@@ -26,7 +26,7 @@ const HomePage = ({ logout }) => {
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
-      { name: "Check Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
+      { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
     ],
   });
@@ -79,7 +79,7 @@ const HomePage = ({ logout }) => {
   };
 
   const checkWalletOwnership = async () => {
-    setIsLoading(true);
+
     try {
       const token = await getToken();
       if (!token) {
@@ -96,9 +96,9 @@ const HomePage = ({ logout }) => {
 
       const response = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
       setHasWallet(response.data.has_wallet);
-      setIsLoading(false);
+
     } catch (error) {
-      setIsLoading(false);
+
       console.error('Error checking wallet ownership:', error);
       if (error.response) {
         if (error.response.status === 401) {
@@ -154,68 +154,79 @@ const HomePage = ({ logout }) => {
     setIsDetailDialogOpen(true);
   };
 
+  const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+
+  const fetchServices = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      const urlLocal = 'https://manage-backend.inethilocal.net/service/list-by-type/';
+      const urlGlobal = 'https://manage-backend.inethicloud.net/service/list-by-type/';
+
+      let servicesDataGlobal = {};
+      let servicesDataLocal = {};
+
+      try {
+        const responseGlobal = await Promise.race([axios.get(urlGlobal, config), timeout(5000)]);
+        servicesDataGlobal = responseGlobal.data.data;
+      } catch (err) {
+        console.error(`Error fetching global data. You may not have Internet.`);
+      }
+
+      try {
+        const responseLocal = await Promise.race([axios.get(urlLocal, config), timeout(5000)]);
+        servicesDataLocal = responseLocal.data.data;
+      } catch (err) {
+        console.error(`Error fetching local data. Are you connected to an iNethi network?`);
+      }
+
+      const combinedServices = { ...servicesDataGlobal };
+
+      Object.entries(servicesDataLocal).forEach(([category, services]) => {
+        combinedServices[category] = services;
+      });
+
+      const fetchedCategories = {};
+      Object.entries(combinedServices).forEach(([category, services]) => {
+        fetchedCategories[category] = services.map(service => ({
+          name: service.name,
+          url: service.url,
+          action: () => navigate('/webview', { state: { url: service.url } })
+        }));
+      });
+
+      setCategories(prevCategories => ({
+        Wallet: prevCategories.Wallet,
+        ...fetchedCategories
+      }));
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError(`Failed to fetch services: ${err.message}`);
+    }
+  };
   useEffect(() => {
-    const fetchServices = async () => {
+    const initialize = async () => {
       setIsLoading(true);
       try {
-        const token = await getToken();
-        if (!token) return;
-
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        };
-
-        const urlLocal = 'https://manage-backend.inethilocal.net/service/list-by-type/';
-        const urlGlobal = 'https://manage-backend.inethicloud.net/service/list-by-type/';
-
-        let servicesDataGlobal = {};
-        let servicesDataLocal = {};
-
-        try {
-          const responseGlobal = await axios.get(urlGlobal, config);
-          servicesDataGlobal = responseGlobal.data.data;
-        } catch (err) {
-          console.error(`Error fetching global data. You may not have Internet.`);
-        }
-
-        try {
-          const responseLocal = await axios.get(urlLocal, config);
-          servicesDataLocal = responseLocal.data.data;
-        } catch (err) {
-          console.error(`Error fetching local data. Are you connected to an iNethi network?`);
-        }
-
-        const combinedServices = { ...servicesDataGlobal };
-
-        Object.entries(servicesDataLocal).forEach(([category, services]) => {
-          combinedServices[category] = services;
-        });
-
-        const fetchedCategories = {};
-        Object.entries(combinedServices).forEach(([category, services]) => {
-          fetchedCategories[category] = services.map(service => ({
-            name: service.name,
-            url: service.url,
-            action: () => navigate('/webview', { state: { url: service.url } })
-          }));
-        });
-
-        setCategories(prevCategories => ({
-          Wallet: prevCategories.Wallet,
-          ...fetchedCategories
-        }));
+        await Promise.all([
+          checkWalletOwnership(),
+          fetchServices(),
+          fetchBalance(),
+        ]);
       } catch (err) {
-        console.error('Error fetching services:', err);
-        setError(`Failed to fetch services: ${err.message}`);
+        console.error('Initialization error:', err);
       } finally {
         setIsLoading(false);
       }
     };
-    checkWalletOwnership();
-    fetchServices();
-    fetchBalance()
+    initialize();
   }, []);
 
   const openURL = (url) => {
