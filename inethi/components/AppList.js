@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
 import RNFS from 'react-native-fs';
+import { useNavigate } from 'react-router-native'; // Import useNavigate
 import { getApps } from '../service/api.js'; // Ensure the path is correct
 
 const requestStoragePermission = async () => {
@@ -84,6 +85,7 @@ const requestStoragePermission = async () => {
 
 export default function AppList() {
   const [apps, setApps] = useState([]);
+  const navigate = useNavigate(); // Get the navigate function
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,7 +133,7 @@ export default function AppList() {
           console.log("file exists!!")
           Alert.alert(
             'Download Complete',
-            'The Application has been downloaded successfully. Opening the Files app now...',
+            'The Application has been downloaded successfully. Opening the Files app now..',
             [
               {
                 text: 'Open Files',
@@ -176,17 +178,28 @@ export default function AppList() {
   );
 
   return (
-    <FlatList
-      data={apps}
-      renderItem={renderAppItem}
-      keyExtractor={(item) => item.name}
-      contentContainerStyle={styles.container}
-    />
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigate('/')} // Navigate to the homepage
+      >
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
+      <FlatList
+        data={apps}
+        renderItem={renderAppItem}
+        keyExtractor={(item) => item.name}
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  listContainer: {
     padding: 10,
   },
   appItem: {
@@ -218,6 +231,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   downloadButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+  backButton: {
+    padding: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    margin: 10,
+  },
+  backButtonText: {
     color: '#fff',
     textAlign: 'center',
   },

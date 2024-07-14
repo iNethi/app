@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
@@ -80,7 +80,6 @@ const HomePage = ({ logout }) => {
   };
 
   const checkWalletOwnership = async () => {
-
     try {
       const token = await getToken();
       if (!token) {
@@ -97,9 +96,7 @@ const HomePage = ({ logout }) => {
 
       const response = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
       setHasWallet(response.data.has_wallet);
-
     } catch (error) {
-
       console.error('Error checking wallet ownership:', error);
       if (error.response) {
         if (error.response.status === 401) {
@@ -171,7 +168,7 @@ const HomePage = ({ logout }) => {
       const urlLocal = 'https://manage-backend.inethilocal.net/service/list-by-type/';
       const urlGlobal = 'https://manage-backend.inethicloud.net/service/list-by-type/';
 
-      let servicesDataGlobal = {}; ``
+      let servicesDataGlobal = {};
       let servicesDataLocal = {};
 
       try {
@@ -212,6 +209,7 @@ const HomePage = ({ logout }) => {
       setError(`Failed to fetch services: ${err.message}`);
     }
   };
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -279,26 +277,18 @@ const HomePage = ({ logout }) => {
       </Card>
     ))
   );
-  const renderServiceContainer = () => {
-    <Card key={"service"} style={styles.card}>
-      <ServiceContainer />
-    </Card>
-  }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
           source={require('../assets/images/inethi-logo-large.png')}
         />
       </View>
-      <View>
-        <Card key={"service"} style={styles.card}>
-          <ServiceContainer />
-        </Card>
-      </View>
-
       {renderCategoryCards()}
+      <View style={styles.card}>
+        <ServiceContainer />
+      </View>
       <Portal>
         <Dialog visible={isCreateWalletDialogOpen} onDismiss={() => setIsCreateWalletDialogOpen(false)}>
           <Dialog.Title>Create Wallet</Dialog.Title>
@@ -344,8 +334,7 @@ const HomePage = ({ logout }) => {
           </Dialog>
         )}
       </Portal>
-
-    </View>
+    </ScrollView>
   );
 };
 
