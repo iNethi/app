@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-native';
 import { getApps } from '../service/api.js';
 import * as Progress from 'react-native-progress'; // Import react-native-progress
 import DeviceInfo from 'react-native-device-info'; // Import device info
+import Metric from '../service/Metric.js';
 
 const requestStoragePermission = async () => {
   if (Platform.OS === 'android') {
@@ -90,6 +91,7 @@ export default function AppList() {
   const [installedApps, setInstalledApps] = useState({});
   const [downloadProgress, setDownloadProgress] = useState(0); // State for download progress
   const navigate = useNavigate();
+  const [featureClicked, setFeatureClicked] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -97,10 +99,15 @@ export default function AppList() {
       console.log("permission", hasPermission);
       if (hasPermission) {
         try {
+          console.log("feature before set:", featureClicked);
+          setFeatureClicked("AppStore")
+
           const data = await getApps();
           console.log("data received:", data);
           setApps(data);
           checkInstalledApps(data);
+
+
         } catch (error) {
           console.error('Error fetching apps:', error);
         }
@@ -109,13 +116,13 @@ export default function AppList() {
 
     fetchData();
   }, []);
+  console.log("feature after set:", featureClicked);
 
   const checkInstalledApps = async (apps) => {
     const installedStatus = {};
     for (const app of apps) {
-      console.log(app.name)
-      const isInstalled = await DeviceInfo.isAppInstalled(app.name);
-      installedStatus[app.name] = isInstalled;
+      const isInstalled = await DeviceInfo.isAppInstalled(app.packageName); // Use packageName to check if the app is installed
+      installedStatus[app.packageName] = isInstalled;
     }
     setInstalledApps(installedStatus);
   };
@@ -197,7 +204,7 @@ export default function AppList() {
       <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.description}>{item.description}</Text>
-      {installedApps[item.name] ? (
+      {installedApps[item.packageName] ? (
         <Text style={styles.installedText}>Installed</Text>
       ) : (
         <TouchableOpacity
@@ -231,9 +238,10 @@ export default function AppList() {
       <FlatList
         data={apps}
         renderItem={renderAppItem}
-        keyExtractor={(item) => item.url} // Ensure unique key for each item
+        keyExtractor={(item) => item.url} // Use URL as a unique key
         contentContainerStyle={styles.listContainer}
       />
+      <Metric feature={featureClicked} />
     </View>
   );
 };
