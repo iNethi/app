@@ -6,6 +6,7 @@ import axios from 'axios';
 import { getToken } from '../utils/tokenUtils';
 import { useBalance } from '../context/BalanceContext'; // Import useBalance
 import ServiceContainer from '../components/ServiceContainer';
+import Metric from '../service/Metric';
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -210,6 +211,7 @@ const HomePage = ({ logout }) => {
     }
   };
 
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -224,9 +226,10 @@ const HomePage = ({ logout }) => {
       } finally {
         setIsLoading(false);
       }
-    };
+    }
     initialize();
   }, []);
+
 
   const openURL = (url) => {
     navigate('/webview', { state: { url } });
@@ -288,6 +291,7 @@ const HomePage = ({ logout }) => {
       {renderCategoryCards()}
       <View style={styles.card}>
         <ServiceContainer />
+
       </View>
       <Portal>
         <Dialog visible={isCreateWalletDialogOpen} onDismiss={() => setIsCreateWalletDialogOpen(false)}>
