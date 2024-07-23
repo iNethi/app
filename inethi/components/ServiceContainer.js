@@ -1,11 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigate } from 'react-router-native';
+import { recordFeatureUsage } from '../service/Metric'
 
 export default function ServiceContainer() {
     const navigate = useNavigate();
 
     const apstoreNav = () => {
+        recordFeatureUsage('AppStore');
+
+
 
 
 

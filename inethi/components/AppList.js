@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-native';
 import { getApps } from '../service/api.js';
 import * as Progress from 'react-native-progress'; // Import react-native-progress
 import DeviceInfo from 'react-native-device-info'; // Import device info
-import Metric from '../service/Metric.js';
+import { recordAppDownloaded } from '../service/Metric.js';
 
 const requestStoragePermission = async () => {
   if (Platform.OS === 'android') {
@@ -100,7 +100,7 @@ export default function AppList() {
       if (hasPermission) {
         try {
           console.log("feature before set:", featureClicked);
-          setFeatureClicked("AppStore")
+          // setFeatureClicked("AppStore")
 
           const data = await getApps();
           console.log("data received:", data);
@@ -116,7 +116,7 @@ export default function AppList() {
 
     fetchData();
   }, []);
-  console.log("feature after set:", featureClicked);
+  // console.log("feature after set:", featureClicked);
 
   const checkInstalledApps = async (apps) => {
     const installedStatus = {};
@@ -139,6 +139,9 @@ export default function AppList() {
   const downloadApp = async (url) => {
     try {
       const downloadDirectory = await createDownloadDirectory();
+      const appname = url.split('/').pop();
+      console.log("app name :", appname);
+
       const downloadDest = `${downloadDirectory}/${url.split('/').pop()}`;
       console.log("Download destination:", downloadDest);
 
@@ -163,6 +166,8 @@ export default function AppList() {
 
       if (response.statusCode === 200) {
         console.log('File downloaded to:', downloadDest);
+        recordAppDownloaded(appname);
+
 
         const fileExists = await RNFS.exists(downloadDest);
         if (fileExists) {
@@ -241,7 +246,7 @@ export default function AppList() {
         keyExtractor={(item) => item.url} // Use URL as a unique key
         contentContainerStyle={styles.listContainer}
       />
-      <Metric feature={featureClicked} />
+
     </View>
   );
 };
