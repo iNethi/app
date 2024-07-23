@@ -4,7 +4,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeRouter, Route, Routes, useLocation } from 'react-router-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import HomePage from './pages/HomePage';
-import NewModalNetworkStatus from './components/NewModalNetworkStatus';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
@@ -30,7 +29,7 @@ const AppRoutes = ({ logout, userToken, handleLoginSuccess, handleRegisterSucces
                         <Route path="/webview" element={<WebViewComponent />} />
                         <Route path="/container" element={<ServiceContainer />} />
                         <Route path="/appstore" element={<AppList />} />
-                        <Route path="/map" element={<MapPage />} /> {/* Add this line */}
+                        <Route path="/map" element={<MapPage />} />
                     </>
                 ) : (
                     <>
