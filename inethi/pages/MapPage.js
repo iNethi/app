@@ -178,28 +178,26 @@ const MapPage = () => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.mapcontainer}>
-                <MapboxGL.MapView
-                    style={styles.map}
-                    zoomEnabled={true}
-                    scrollEnabled={true}
-                    styleURL={isOffline ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Outdoors}
-                    onWillStartLoadingMap={() => {
-                        console.log(isOffline ? 'Using offline Mapbox' : 'Using online Mapbox');
+            <MapboxGL.MapView
+                style={styles.map}
+                zoomEnabled={true}
+                scrollEnabled={true}
+                styleURL={isOffline ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Outdoors}
+                onWillStartLoadingMap={() => {
+                    console.log(isOffline ? 'Using offline Mapbox' : 'Using online Mapbox');
+                }}
+            >
+                <MapboxGL.Camera
+                    zoomLevel={14}
+                    centerCoordinate={[18.3585, -34.1378]}
+                    bounds={{
+                        ne: [18.3685, -34.1278],
+                        sw: [18.3485, -34.1478],
                     }}
-                >
-                    <MapboxGL.Camera
-                        zoomLevel={14}
-                        centerCoordinate={[18.3585, -34.1378]}
-                        bounds={{
-                            ne: [18.3685, -34.1278],
-                            sw: [18.3485, -34.1478],
-                        }}
-                    />
-                    {routers.map(renderRouterMarker)}
-                </MapboxGL.MapView>
-                {renderPopup()}
-            </View>
+                />
+                {routers.map(renderRouterMarker)}
+            </MapboxGL.MapView>
+            {renderPopup()}
         </View>
     );
 };
@@ -208,9 +206,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-    },
-    mapcontainer: {
-        flex: 1,
     },
     map: {
         flex: 1,

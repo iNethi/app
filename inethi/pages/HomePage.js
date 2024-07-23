@@ -31,6 +31,9 @@ const HomePage = ({ logout }) => {
       { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
     ],
+    Navigator: [
+      { name: "FindHotspot", action: () => navigate('/map') },
+    ],
   });
 
   const handleCreateWalletClick = () => {
@@ -203,6 +206,7 @@ const HomePage = ({ logout }) => {
 
       setCategories(prevCategories => ({
         Wallet: prevCategories.Wallet,
+        Navigator: prevCategories.Navigator,
         ...fetchedCategories
       }));
     } catch (err) {
@@ -210,7 +214,6 @@ const HomePage = ({ logout }) => {
       setError(`Failed to fetch services: ${err.message}`);
     }
   };
-
 
   useEffect(() => {
     const initialize = async () => {
@@ -229,7 +232,6 @@ const HomePage = ({ logout }) => {
     }
     initialize();
   }, []);
-
 
   const openURL = (url) => {
     navigate('/webview', { state: { url } });
@@ -291,7 +293,6 @@ const HomePage = ({ logout }) => {
       {renderCategoryCards()}
       <View style={styles.card}>
         <ServiceContainer />
-
       </View>
       <Portal>
         <Dialog visible={isCreateWalletDialogOpen} onDismiss={() => setIsCreateWalletDialogOpen(false)}>
