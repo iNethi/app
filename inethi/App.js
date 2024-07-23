@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeRouter, Route, Routes } from 'react-router-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import HomePage from './pages/HomePage';
+import NewModalNetworkStatus from './components/NewModalNetworkStatus';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
@@ -12,6 +13,7 @@ import RegisterPage from './pages/RegisterPage';
 import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
+import MapPage from './pages/MapPage';
 
 const App = () => {
     const [userToken, setUserToken] = useState(null);
