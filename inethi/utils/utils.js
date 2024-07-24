@@ -18,7 +18,7 @@ export const handleLogin = async (
       )}&password=${encodeURIComponent(
         password,
       )}&grant_type=password&scope=openid offline_access&client_secret=${encodeURIComponent(
-        'TdASgS06uBdykXKyd2D5wueDoU7Q0Reo',
+        'k3jvAdgSgHDSyBgRoRPQTksscr1D8JXo',
       )}`,
       {
         headers: {
