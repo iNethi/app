@@ -16,7 +16,7 @@ export const getToken = async logout => {
       return null;
     }
   }
-
+  console.log(token);
   return token;
 };
 
