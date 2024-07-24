@@ -22,6 +22,7 @@ import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
 import ServiceContainer from '../components/ServiceContainer';
 import Metric from '../service/Metric';
+import {addRecipient, fetchRecipients} from '../service/recipient';
 
 const HomePage = ({logout}) => {
   // const baseURL = 'https://manage-backend.inethicloud.net';
@@ -41,6 +42,15 @@ const HomePage = ({logout}) => {
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
   const {balance, fetchBalance} = useBalance(); // Destructure balance and fetchBalance
+  //Wallet States
+  const [isAddRecipientDialogOpen, setIsAddRecipientDialogOpen] =
+    useState(false);
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientWalletAddress, setRecipientWalletAddress] = useState('');
+  const [recipientWalletName, setRecipientWalletName] = useState('');
+  const [recipients, setRecipients] = useState([]);
+  const [isViewRecipientsDialogOpen, setIsViewRecipientsDialogOpen] =
+    useState(false);
 
   const [categories, setCategories] = useState({
     Wallet: [
@@ -55,8 +65,65 @@ const HomePage = ({logout}) => {
         action: () => navigate('/payment'),
         requiresWallet: true,
       },
+      {
+        name: 'Add Recipients',
+        action: () => setIsAddRecipientDialogOpen(true),
+        requiresWallet: true,
+      },
+      {
+        name: 'View Recipients',
+        action: () => handleViewRecipientsClick(),
+        requiresWallet: true,
+      },
     ],
   });
+
+  //Recipient Functions
+  const handleAddRecipient = async () => {
+    try {
+      const result = await addRecipient(
+        recipientName,
+        recipientWalletAddress,
+        recipientWalletName,
+      );
+      alert(`Recipient added successfully: ${result.message}`);
+      setIsAddRecipientDialogOpen(false);
+    } catch (error) {
+      alert(`Error adding recipient: ${error.message}`);
+    }
+  };
+
+  // const handleViewRecipientsClick = async () => {
+  //   try {
+  //     const result = await fetchRecipients();
+  //     setRecipients(result);
+  //     setIsViewRecipientsDialogOpen(true);
+  //   } catch (error) {
+  //     alert(`Error fetching recipients: ${error.message}`);
+  //   }
+  // };
+
+  const groupRecipientsByAlphabet = recipients => {
+    return recipients.reduce((groups, recipient) => {
+      const firstLetter = recipient.name.charAt(0).toUpperCase();
+      if (!groups[firstLetter]) {
+        groups[firstLetter] = [];
+      }
+      groups[firstLetter].push(recipient);
+      return groups;
+    }, {});
+  };
+
+  const handleViewRecipientsClick = async () => {
+    try {
+      const result = await fetchRecipients();
+      const groupedRecipients = groupRecipientsByAlphabet(result);
+      setRecipients(groupedRecipients);
+      setIsViewRecipientsDialogOpen(true);
+    } catch (error) {
+      alert(`Error fetching recipients: ${error.message}`);
+    }
+  };
 
   const handleCreateWalletClick = () => {
     setIsCreateWalletDialogOpen(true);
@@ -408,6 +475,36 @@ const HomePage = ({logout}) => {
             </Dialog.Content>
           </Dialog>
         )}
+
+        <Dialog
+          visible={isViewRecipientsDialogOpen}
+          onDismiss={() => setIsViewRecipientsDialogOpen(false)}>
+          <Dialog.Title>View Recipients</Dialog.Title>
+          <Dialog.Content>
+            {Object.keys(recipients).length > 0 ? (
+              Object.keys(recipients)
+                .sort()
+                .map((letter, index) => (
+                  <View key={index}>
+                    <Title>{letter}</Title>
+                    {recipients[letter].map((recipient, idx) => (
+                      <Paragraph key={idx}>
+                        {recipient.name} - {recipient.wallet_address} -{' '}
+                        {recipient.wallet_name}
+                      </Paragraph>
+                    ))}
+                  </View>
+                ))
+            ) : (
+              <Paragraph>No recipients found.</Paragraph>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsViewRecipientsDialogOpen(false)}>
+              Close
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
     </ScrollView>
   );
@@ -455,6 +552,18 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 8,
+  },
+  alphabetGroup: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  alphabetTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  recipientItem: {
+    marginBottom: 5,
   },
 });
 
