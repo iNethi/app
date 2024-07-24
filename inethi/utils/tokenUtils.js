@@ -41,6 +41,7 @@ export const getNewToken = async logout => {
       {
         client_id: 'testclient',
         grant_type: 'refresh_token',
+        //client_secret: 'TdASgS06uBdykXKyd2D5wueDoU7Q0Reo',
         refresh_token: refreshToken,
       },
       {
