@@ -37,82 +37,38 @@ const HomePage = ({logout}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
-  const {balance, fetchBalance} = useBalance(); // Destructure balance and fetchBalance
-  //Wallet States
-  const [isAddRecipientDialogOpen, setIsAddRecipientDialogOpen] =
-    useState(false);
-  const [recipientName, setRecipientName] = useState('');
-  const [recipientWalletAddress, setRecipientWalletAddress] = useState('');
-  const [recipientWalletName, setRecipientWalletName] = useState('');
-  const [recipients, setRecipients] = useState([]);
-  const [isViewRecipientsDialogOpen, setIsViewRecipientsDialogOpen] =
-    useState(false);
+  const {balance, fetchBalance} = useBalance();
 
-  const [categories, setCategories] = useState({
-    Wallet: [
-      {name: 'Create Wallet', action: () => handleCreateWalletClick()},
-      {
-        name: 'Wallet Details',
-        action: () => handleCheckWalletDetails(),
-        requiresWallet: true,
-      },
-      {
-        name: 'Transfer',
-        action: () => navigate('/payment'),
-        requiresWallet: true,
-      },
-      {
-        name: 'Add Recipients',
-        action: () => handleAddRecipientClick(), // Call handleAddRecipientClick function
-        requiresWallet: true,
-      },
-      {
-        name: 'View Recipients',
-        action: () => handleViewRecipientsClick(),
-        requiresWallet: true,
-      },
-    ],
-  });
+  const [walletCategories] = useState([
+    {name: 'Create Wallet', action: () => handleCreateWalletClick()},
+    {
+      name: 'Wallet Details',
+      action: () => handleCheckWalletDetails(),
+      requiresWallet: true,
+    },
+    {
+      name: 'Transfer',
+      action: () => navigate('/payment'),
+      requiresWallet: true,
+    },
+    {
+      name: 'Add Recipients',
+      action: () => handleAddRecipientClick(),
+      requiresWallet: true,
+    },
+    {
+      name: 'View Recipients',
+      action: () => handleViewRecipientsClick(),
+      requiresWallet: true,
+    },
+  ]);
 
-  //Recipient Functions
-  const handleAddRecipient = async () => {
-    try {
-      const result = await addRecipient(
-        recipientName,
-        recipientWalletAddress,
-        recipientWalletName,
-      );
-      alert(`Recipient added successfully: ${result.message}`);
-      setIsAddRecipientDialogOpen(false);
-    } catch (error) {
-      alert(`Error adding recipient: ${error.message}`);
-    }
-  };
+  const [categories, setCategories] = useState({});
 
-  const groupRecipientsByAlphabet = recipients => {
-    return recipients.reduce((groups, recipient) => {
-      const firstLetter = recipient.name.charAt(0).toUpperCase();
-      if (!groups[firstLetter]) {
-        groups[firstLetter] = [];
-      }
-      groups[firstLetter].push(recipient);
-      return groups;
-    }, {});
-  };
-
-  // const handleViewRecipientsClick = async () => {
-  //   try {
-  //     const result = await fetchRecipients();
-  //     const groupedRecipients = groupRecipientsByAlphabet(result);
-  //     setRecipients(groupedRecipients);
-  //     setIsViewRecipientsDialogOpen(true);
-  //   } catch (error) {
-  //     alert(`Error fetching recipients: ${error.message}`);
-  //   }
-  // };
   const handleViewRecipientsClick = () => {
     navigate('/view-recipients');
   };
+
   const handleAddRecipientClick = () => {
     navigate('/add-recipient');
   };
@@ -324,10 +280,7 @@ const HomePage = ({logout}) => {
         }));
       });
 
-      setCategories(prevCategories => ({
-        Wallet: prevCategories.Wallet,
-        ...fetchedCategories,
-      }));
+      setCategories(fetchedCategories);
     } catch (err) {
       console.error('Error fetching services:', err);
       setError(`Failed to fetch services: ${err.message}`);
@@ -392,7 +345,7 @@ const HomePage = ({logout}) => {
     return buttonRows;
   };
 
-  const renderCategoryCards = () =>
+  const renderCategoryCards = categories =>
     Object.entries(categories).map(([category, buttons], index) => (
       <Card key={index} style={styles.card}>
         <Card.Content>
@@ -402,50 +355,27 @@ const HomePage = ({logout}) => {
       </Card>
     ));
 
-  // const [categories, setCategories] = useState({
-  //   Wallet: [
-  //     {name: 'Create Wallet', action: () => handleCreateWalletClick()},
-  //     {
-  //       name: 'Wallet Details',
-  //       action: () => handleCheckWalletDetails(),
-  //       requiresWallet: true,
-  //     },
-  //     {
-  //       name: 'Transfer',
-  //       action: () => navigate('/payment'),
-  //       requiresWallet: true,
-  //     },
-  //     {
-  //       name: 'Add Recipients',
-  //       action: () => setIsCreateWalletDialogOpen(true),
-  //       requiresWallet: true,
-  //     },
-  //     {
-  //       name: 'View Recipients',
-  //       action: () => navigate('/view-recipients'),
-  //       requiresWallet: true,
-  //     },
-  //   ],
-  // });
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.logoContainer}>
         <Image source={require('../assets/images/inethi-logo-large.png')} />
       </View>
       {!showWalletCategories ? (
-        <Button
-          mode="contained"
-          onPress={() => setShowWalletCategories(true)}
-          style={styles.button}>
-          Wallet
-        </Button>
+        <>
+          {renderCategoryCards(categories)}
+          <Button
+            mode="contained"
+            onPress={() => setShowWalletCategories(true)}
+            style={styles.button}>
+            Wallet
+          </Button>
+          <View style={styles.card}>
+            <ServiceContainer />
+          </View>
+        </>
       ) : (
-        renderCategoryCards()
+        renderCategoryCards({Wallet: walletCategories})
       )}
-      <View style={styles.card}>
-        <ServiceContainer />
-      </View>
       <Portal>
         <Dialog
           visible={isCreateWalletDialogOpen}
