@@ -62,7 +62,11 @@ const ViewRecipientsScreen = () => {
               {recipients[letter].map((recipient, idx) => (
                 <Card key={idx} style={styles.card}>
                   <Card.Content>
-                    <Paragraph style={styles.recipientText}>
+                    <Paragraph
+                      onPress={() =>
+                        navigate('/recipient-details', {state: {recipient}})
+                      }
+                      style={styles.recipientText}>
                       {recipient.name} - {recipient.wallet_address} -{' '}
                       {recipient.wallet_name}
                     </Paragraph>
@@ -74,7 +78,10 @@ const ViewRecipientsScreen = () => {
       ) : (
         <Paragraph>No recipients found.</Paragraph>
       )}
-      <Button onPress={() => navigate(-1)} style={styles.backButton}>
+      <Button
+        mode="contained"
+        onPress={() => navigate(-1)}
+        style={styles.backButton}>
         Go Back
       </Button>
     </ScrollView>

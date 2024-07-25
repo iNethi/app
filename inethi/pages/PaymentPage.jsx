@@ -3,28 +3,28 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {useNavigate} from 'react-router-native';
+import {useNavigate, useLocation} from 'react-router-native';
 import axios from 'axios';
-import {Dialog} from 'react-native-paper';
+import {Dialog, Button} from 'react-native-paper';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext';
 
 const PaymentPage = () => {
-  // const baseURL = 'https://manage-backend.inethicloud.net';
   const baseURL = 'http://172.16.13.141:8000';
-
   const walletSendEndpoint = '/wallet/send-token/';
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState('username'); // Default method
-  const [receiver, setReceiver] = useState('');
+  const location = useLocation();
+  const preFilledWalletAddress = location.state?.walletAddress || '';
+
+  const [paymentMethod, setPaymentMethod] = useState('username');
+  const [receiver, setReceiver] = useState(preFilledWalletAddress);
   const [amount, setAmount] = useState('');
-  const {balance, fetchBalance} = useBalance(); // Destructure balance and fetchBalance
+  const {balance, fetchBalance} = useBalance();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -89,7 +89,7 @@ const PaymentPage = () => {
         } else if (error.response.status === 500) {
           Alert.alert(
             'Error',
-            'Error sending payment. Check payment details and you gas status alternatively contact iNethi support.',
+            'Error sending payment. Check payment details and your gas status alternatively contact iNethi support.',
           );
         } else {
           Alert.alert('Error', `Failed to send payment: ${error.message}`);
@@ -101,7 +101,7 @@ const PaymentPage = () => {
   };
 
   useEffect(() => {
-    fetchBalance(); // Fetch balance when the page loads
+    fetchBalance();
   }, []);
 
   useEffect(() => {
@@ -144,10 +144,13 @@ const PaymentPage = () => {
           keyboardType="numeric"
         />
         <Button
-          title="Send Payment"
+          mode="contained"
           onPress={handleSendPayment}
           disabled={isButtonDisabled}
-        />
+          style={isButtonDisabled ? styles.disabledButton : styles.sendButton}
+          labelStyle={styles.buttonText}>
+          Send Payment
+        </Button>
         {isLoading && (
           <Dialog visible={true}>
             <Dialog.Content>
@@ -157,9 +160,10 @@ const PaymentPage = () => {
         )}
       </View>
       <Button
-        title="Go Back"
+        mode="contained"
         onPress={() => navigate(-1)}
-        style={styles.backButton}>
+        style={styles.backButton}
+        labelStyle={styles.buttonText}>
         Go Back
       </Button>
     </View>
