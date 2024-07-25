@@ -67,7 +67,7 @@ const HomePage = ({logout}) => {
       },
       {
         name: 'Add Recipients',
-        action: () => setIsAddRecipientDialogOpen(true),
+        action: () => handleAddRecipientClick(), // Call handleAddRecipientClick function
         requiresWallet: true,
       },
       {
@@ -93,16 +93,6 @@ const HomePage = ({logout}) => {
     }
   };
 
-  // const handleViewRecipientsClick = async () => {
-  //   try {
-  //     const result = await fetchRecipients();
-  //     setRecipients(result);
-  //     setIsViewRecipientsDialogOpen(true);
-  //   } catch (error) {
-  //     alert(`Error fetching recipients: ${error.message}`);
-  //   }
-  // };
-
   const groupRecipientsByAlphabet = recipients => {
     return recipients.reduce((groups, recipient) => {
       const firstLetter = recipient.name.charAt(0).toUpperCase();
@@ -114,15 +104,21 @@ const HomePage = ({logout}) => {
     }, {});
   };
 
-  const handleViewRecipientsClick = async () => {
-    try {
-      const result = await fetchRecipients();
-      const groupedRecipients = groupRecipientsByAlphabet(result);
-      setRecipients(groupedRecipients);
-      setIsViewRecipientsDialogOpen(true);
-    } catch (error) {
-      alert(`Error fetching recipients: ${error.message}`);
-    }
+  // const handleViewRecipientsClick = async () => {
+  //   try {
+  //     const result = await fetchRecipients();
+  //     const groupedRecipients = groupRecipientsByAlphabet(result);
+  //     setRecipients(groupedRecipients);
+  //     setIsViewRecipientsDialogOpen(true);
+  //   } catch (error) {
+  //     alert(`Error fetching recipients: ${error.message}`);
+  //   }
+  // };
+  const handleViewRecipientsClick = () => {
+    navigate('/view-recipients');
+  };
+  const handleAddRecipientClick = () => {
+    navigate('/add-recipient');
   };
 
   const handleCreateWalletClick = () => {
