@@ -247,6 +247,12 @@ const WalletCategoriesPage = () => {
           {renderButtons(walletCategories)}
         </Card.Content>
       </Card>
+      <Button
+        mode="contained"
+        onPress={() => navigate('/')}
+        style={styles.button}>
+        Go Back
+      </Button>
       <Portal>
         <Dialog
           visible={isCreateWalletDialogOpen}
@@ -301,6 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
     backgroundColor: '#4285F4',
+    marginBottom: 10, // Add margin for spacing
   },
   buttonDisabled: {
     backgroundColor: '#d3d3d3',
