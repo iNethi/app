@@ -16,6 +16,7 @@ import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
 import AddRecipientScreen from './pages/AddRecipients';
 import ViewRecipientsScreen from './pages/ViewRecipients';
+import WalletCategoriesPage from './pages/Wallet';
 const App = () => {
   const [userToken, setUserToken] = useState(null);
 
@@ -74,6 +75,10 @@ const App = () => {
                   <Route
                     path="/view-recipients"
                     element={<ViewRecipientsScreen />} // Add ViewRecipientsScreen route
+                  />
+                  <Route
+                    path="/wallet-categories"
+                    element={<WalletCategoriesPage />} // Add WalletCategoriesPage route
                   />
                 </>
               ) : (
