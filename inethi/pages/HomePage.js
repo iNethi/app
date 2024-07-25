@@ -3,9 +3,9 @@ import {
   View,
   StyleSheet,
   Image,
+  ScrollView,
   ActivityIndicator,
   Alert,
-  ScrollView,
 } from 'react-native';
 import {
   Button,
@@ -19,26 +19,22 @@ import {
 import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext'; // Import useBalance
+import {useBalance} from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
-import Metric from '../service/Metric';
-import {addRecipient, fetchRecipients} from '../service/recipient';
 
 const HomePage = ({logout}) => {
-  // const baseURL = 'https://manage-backend.inethicloud.net';
   const baseURL = 'http://172.16.13.141:8000';
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';
   const [hasWallet, setHasWallet] = useState(false);
+  const [showWalletCategories, setShowWalletCategories] = useState(false);
   const navigate = useNavigate();
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
     useState(false);
   const [walletName, setWalletName] = useState('');
   const [error, setError] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
   const {balance, fetchBalance} = useBalance(); // Destructure balance and fetchBalance
@@ -145,7 +141,7 @@ const HomePage = ({logout}) => {
         alert(
           `Wallet created successfully! Address: ${response.data.address}, Name: ${response.data.name}`,
         );
-        fetchBalance(); // Refresh balance after creating a wallet
+        fetchBalance();
       }
     } catch (error) {
       console.error('Error creating wallet:', error);
@@ -266,7 +262,6 @@ const HomePage = ({logout}) => {
 
   const handleCheckWalletDetails = async () => {
     await fetchWalletDetails();
-    setIsDetailDialogOpen(true);
   };
 
   const timeout = ms =>
@@ -285,10 +280,7 @@ const HomePage = ({logout}) => {
         },
       };
 
-      const urlLocal =
-        // 'https://manage-backend.inethilocal.net/service/list-by-type/';
-        'http://172.16.13.141:8000';
-
+      const urlLocal = 'http://172.16.13.141:8000';
       const urlGlobal =
         'https://manage-backend.inethicloud.net/service/list-by-type/';
 
@@ -410,12 +402,47 @@ const HomePage = ({logout}) => {
       </Card>
     ));
 
+  // const [categories, setCategories] = useState({
+  //   Wallet: [
+  //     {name: 'Create Wallet', action: () => handleCreateWalletClick()},
+  //     {
+  //       name: 'Wallet Details',
+  //       action: () => handleCheckWalletDetails(),
+  //       requiresWallet: true,
+  //     },
+  //     {
+  //       name: 'Transfer',
+  //       action: () => navigate('/payment'),
+  //       requiresWallet: true,
+  //     },
+  //     {
+  //       name: 'Add Recipients',
+  //       action: () => setIsCreateWalletDialogOpen(true),
+  //       requiresWallet: true,
+  //     },
+  //     {
+  //       name: 'View Recipients',
+  //       action: () => navigate('/view-recipients'),
+  //       requiresWallet: true,
+  //     },
+  //   ],
+  // });
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.logoContainer}>
         <Image source={require('../assets/images/inethi-logo-large.png')} />
       </View>
-      {renderCategoryCards()}
+      {!showWalletCategories ? (
+        <Button
+          mode="contained"
+          onPress={() => setShowWalletCategories(true)}
+          style={styles.button}>
+          Wallet
+        </Button>
+      ) : (
+        renderCategoryCards()
+      )}
       <View style={styles.card}>
         <ServiceContainer />
       </View>
@@ -440,30 +467,6 @@ const HomePage = ({logout}) => {
             <Button onPress={handleCreateWallet}>Create</Button>
           </Dialog.Actions>
         </Dialog>
-        <Dialog
-          visible={isBalanceDialogOpen}
-          onDismiss={() => setIsDetailDialogOpen(false)}>
-          <Dialog.Title>Wallet Details</Dialog.Title>
-          <Dialog.Content>
-            {isLoading ? (
-              <ActivityIndicator size="large" />
-            ) : walletDetails ? (
-              <>
-                <Paragraph>
-                  Wallet Address: {walletDetails.wallet_address}
-                </Paragraph>
-                <Paragraph>Balance: {walletDetails.balance}</Paragraph>
-              </>
-            ) : detailsError ? (
-              <Paragraph>{detailsError}</Paragraph>
-            ) : (
-              <Paragraph>Failed to load wallet details.</Paragraph>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
-          </Dialog.Actions>
-        </Dialog>
         {isLoading && (
           <Dialog visible={true}>
             <Dialog.Content>
@@ -471,36 +474,6 @@ const HomePage = ({logout}) => {
             </Dialog.Content>
           </Dialog>
         )}
-
-        <Dialog
-          visible={isViewRecipientsDialogOpen}
-          onDismiss={() => setIsViewRecipientsDialogOpen(false)}>
-          <Dialog.Title>View Recipients</Dialog.Title>
-          <Dialog.Content>
-            {Object.keys(recipients).length > 0 ? (
-              Object.keys(recipients)
-                .sort()
-                .map((letter, index) => (
-                  <View key={index}>
-                    <Title>{letter}</Title>
-                    {recipients[letter].map((recipient, idx) => (
-                      <Paragraph key={idx}>
-                        {recipient.name} - {recipient.wallet_address} -{' '}
-                        {recipient.wallet_name}
-                      </Paragraph>
-                    ))}
-                  </View>
-                ))
-            ) : (
-              <Paragraph>No recipients found.</Paragraph>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsViewRecipientsDialogOpen(false)}>
-              Close
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
       </Portal>
     </ScrollView>
   );
@@ -548,18 +521,6 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 8,
-  },
-  alphabetGroup: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  alphabetTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  recipientItem: {
-    marginBottom: 5,
   },
 });
 
