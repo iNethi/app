@@ -1,6 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
-import {Button, Title, Paragraph, ActivityIndicator} from 'react-native-paper';
+import {
+  Button,
+  Title,
+  Paragraph,
+  ActivityIndicator,
+  Card,
+} from 'react-native-paper';
 import {useNavigate} from 'react-router-native';
 import {fetchRecipients} from '../service/recipient';
 
@@ -49,20 +55,28 @@ const ViewRecipientsScreen = () => {
         Object.keys(recipients)
           .sort()
           .map((letter, index) => (
-            <View key={index}>
-              <Title>{letter}</Title>
+            <View key={index} style={styles.letterSection}>
+              <View style={styles.letterContainer}>
+                <Title style={styles.letter}>{letter}</Title>
+              </View>
               {recipients[letter].map((recipient, idx) => (
-                <Paragraph key={idx}>
-                  {recipient.name} - {recipient.wallet_address} -{' '}
-                  {recipient.wallet_name}
-                </Paragraph>
+                <Card key={idx} style={styles.card}>
+                  <Card.Content>
+                    <Paragraph style={styles.recipientText}>
+                      {recipient.name} - {recipient.wallet_address} -{' '}
+                      {recipient.wallet_name}
+                    </Paragraph>
+                  </Card.Content>
+                </Card>
               ))}
             </View>
           ))
       ) : (
         <Paragraph>No recipients found.</Paragraph>
       )}
-      <Button onPress={() => navigate(-1)}>Go Back</Button>
+      <Button onPress={() => navigate(-1)} style={styles.backButton}>
+        Go Back
+      </Button>
     </ScrollView>
   );
 };
@@ -78,6 +92,28 @@ const styles = StyleSheet.create({
   error: {
     color: 'red',
     marginBottom: 16,
+  },
+  letterSection: {
+    marginBottom: 16,
+  },
+  letterContainer: {
+    backgroundColor: '#f0f0f0', // Adjust this color as needed
+    padding: 8,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  letter: {
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  card: {
+    marginBottom: 8,
+  },
+  recipientText: {
+    fontSize: 16,
+  },
+  backButton: {
+    marginTop: 16,
   },
 });
 
