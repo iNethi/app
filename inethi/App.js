@@ -18,6 +18,8 @@ import AddRecipientScreen from './pages/AddRecipients';
 import ViewRecipientsScreen from './pages/ViewRecipients';
 import WalletCategoriesPage from './pages/Wallet';
 import RecipientDetailsScreen from './pages/RecipientDetails';
+import WalletDetailsPage from './pages/WalletDetails';
+
 const App = () => {
   const [userToken, setUserToken] = useState(null);
 
@@ -84,6 +86,10 @@ const App = () => {
                   <Route
                     path="/recipient-details"
                     element={<RecipientDetailsScreen />}
+                  />
+                  <Route
+                    path="/wallet-details"
+                    element={<WalletDetailsPage />}
                   />
                 </>
               ) : (

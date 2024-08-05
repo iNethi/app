@@ -34,7 +34,6 @@ const WalletCategoriesPage = () => {
   const [walletName, setWalletName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
-  const [detailsError, setDetailsError] = useState('');
 
   useEffect(() => {
     checkWalletOwnership();
@@ -138,7 +137,7 @@ const WalletCategoriesPage = () => {
     }
   };
 
-  const fetchWalletDetails = async () => {
+  const handleCheckWalletDetails = async () => {
     setIsLoading(true);
     try {
       const token = await getToken();
@@ -154,6 +153,9 @@ const WalletCategoriesPage = () => {
       );
       setWalletDetails(response.data);
       setIsLoading(false);
+      navigate(`/wallet-details`, {
+        state: {walletAddress: response.data.wallet_address},
+      });
     } catch (error) {
       setIsLoading(false);
       if (error.response) {
@@ -181,10 +183,6 @@ const WalletCategoriesPage = () => {
         );
       }
     }
-  };
-
-  const handleCheckWalletDetails = async () => {
-    await fetchWalletDetails();
   };
 
   const walletCategories = [
