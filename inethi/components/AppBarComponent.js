@@ -15,36 +15,33 @@ const AppBarComponent = ({ logout }) => {
   const [appState, setAppState] = useState(AppState.currentState);
 
   const checkConnection = async () => {
-    const state = await NetInfo.fetch();
-    if (state.isConnected) {
-      try {
+    try {
+      const state = await NetInfo.fetch();
+      if (state.isConnected) {
         const response = await fetch(NETWORK_SERVICE_URL);
         if (response.ok) {
           setIsConnected(true);
           setVisible(false);
+          await AsyncStorage.removeItem('hasShownNetworkDialog'); // Clear dialog state
         } else {
           setIsConnected(false);
-          const hasShown = await AsyncStorage.getItem('hasShownNetworkDialog');
-          if (!hasShown) {
-            setVisible(true);
-            await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
-          }
+          showDialogIfNotShown();
         }
-      } catch (error) {
+      } else {
         setIsConnected(false);
-        const hasShown = await AsyncStorage.getItem('hasShownNetworkDialog');
-        if (!hasShown) {
-          setVisible(true);
-          await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
-        }
+        showDialogIfNotShown();
       }
-    } else {
+    } catch (error) {
       setIsConnected(false);
-      const hasShown = await AsyncStorage.getItem('hasShownNetworkDialog');
-      if (!hasShown) {
-        setVisible(true);
-        await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
-      }
+      showDialogIfNotShown();
+    }
+  };
+
+  const showDialogIfNotShown = async () => {
+    const hasShown = await AsyncStorage.getItem('hasShownNetworkDialog');
+    if (!hasShown) {
+      setVisible(true);
+      await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
     }
   };
 
@@ -54,21 +51,16 @@ const AppBarComponent = ({ logout }) => {
 
     const handleAppStateChange = async (nextAppState) => {
       if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        const hasShown = await AsyncStorage.getItem('hasShownNetworkDialog');
-        if (hasShown) {
-          await AsyncStorage.removeItem('hasShownNetworkDialog');
-        }
+        await AsyncStorage.removeItem('hasShownNetworkDialog');
+        checkConnection(); // Check connection when app comes back to foreground
       }
       setAppState(nextAppState);
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-    const unsubscribe = NetInfo.addEventListener(checkConnection);
-
     return () => {
       clearInterval(interval);
-      unsubscribe();
       subscription.remove();
     };
   }, [appState]);

@@ -4,9 +4,12 @@ import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
 import { getToken } from '../utils/tokenUtils';
-import { useBalance } from '../context/BalanceContext'; // Import useBalance
+import { useBalance } from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
-import Metric from '../service/Metric';
+import * as amplitude from '@amplitude/analytics-react-native';
+import analytics from '@react-native-firebase/analytics';
+
+amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -18,12 +21,11 @@ const HomePage = ({ logout }) => {
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
   const [walletName, setWalletName] = useState('');
   const [error, setError] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
-  const { balance, fetchBalance } = useBalance(); // Destructure balance and fetchBalance
+  const { balance, fetchBalance } = useBalance();
 
   const [categories, setCategories] = useState({
     Wallet: [
@@ -32,7 +34,7 @@ const HomePage = ({ logout }) => {
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
     ],
     Navigator: [
-      { name: "FindHotspot", action: () => navigate('/map') },
+      { name: "FindHotspot", action: () => handleFindHotspotClick() },
     ],
   });
 
@@ -154,6 +156,42 @@ const HomePage = ({ logout }) => {
   const handleCheckWalletDetails = async () => {
     await fetchWalletDetails();
     setIsDetailDialogOpen(true);
+  };
+
+  const handleFindHotspotClick = () => {
+    const eventName = 'find_hotspot_button_clicked';
+
+    // Log event to Firebase Analytics
+    analytics().logEvent(eventName, {
+      button: 'FindHotspot'
+    }).then(() => {
+      console.log(`Firebase Analytics event logged: ${eventName}`);
+    }).catch((error) => {
+      console.error(`Error logging event to Firebase Analytics: ${error}`);
+    });
+
+    // Log event to Amplitude
+    amplitude.track(eventName, {
+      button: 'FindHotspot'
+    });
+
+    const navigateEventName = 'navigate_to_map';
+
+    // Log event to Firebase Analytics
+    analytics().logEvent(navigateEventName, {
+      feature: 'Map'
+    }).then(() => {
+      console.log(`Firebase Analytics event logged: ${navigateEventName}`);
+    }).catch((error) => {
+      console.error(`Error logging event to Firebase Analytics: ${error}`);
+    });
+
+    // Log event to Amplitude
+    amplitude.track(navigateEventName, {
+      feature: 'Map'
+    });
+
+    navigate('/map');
   };
 
   const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));

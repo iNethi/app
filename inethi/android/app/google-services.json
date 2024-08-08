@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "64555166905",
+    "project_id": "oceanviewanalytics-e53b7",
+    "storage_bucket": "oceanviewanalytics-e53b7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64555166905:android:fca3e0ceb2c54bc5913f68",
+        "android_client_info": {
+          "package_name": "com.inethi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD7oR6IgeA-GUEbmqYSFMIOiaULOVtP4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

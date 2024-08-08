@@ -6,6 +6,12 @@ import MapboxGL from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Ping from 'react-native-ping';
+import { getToken } from '../utils/tokenUtils';
+import { vexo } from 'vexo-analytics';
+import * as amplitude from '@amplitude/analytics-react-native';
+import analytics from '@react-native-firebase/analytics';
+
+vexo('2240fbec-f5f9-4010-98c8-2375bdaf4509');
 
 MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw');
 
@@ -27,6 +33,7 @@ const MapPage = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            const token = await getToken();
             try {
                 const cachedData = await AsyncStorage.getItem('routerData');
                 if (cachedData) {
@@ -43,10 +50,11 @@ const MapPage = () => {
                         const internetCheck = await fetch('https://www.google.com', { method: 'HEAD' });
                         if (internetCheck.ok) {
                             console.log('Internet access confirmed, fetching data from API');
-                            const response = await fetch('http://172.16.9.47:8000/monitoring/devices/', {
+                            const response = await fetch('http://196.24.156.10:8000/monitoring/devices/', {
                                 method: 'GET',
                                 headers: {
-                                    'Content-Type': 'application/json'
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${token}`,
                                 }
                             });
                             if (!response.ok) {
@@ -150,6 +158,24 @@ const MapPage = () => {
     const handleMarkerPress = (router, coordinates) => {
         setSelectedRouter(router);
         setPopupPosition({ top: coordinates[1], left: coordinates[0] });
+
+        const eventName = 'view_router_details';
+
+        // Log event to Firebase Analytics
+        analytics().logEvent(eventName, {
+            router_name: router.name,
+            router_ip: router.ipAddress
+        }).then(() => {
+            console.log(`Firebase Analytics event logged: ${eventName}`);
+        }).catch((error) => {
+            console.error(`Error logging event to Firebase Analytics: ${error}`);
+        });
+
+        // Log event to Amplitude
+        amplitude.track(eventName, {
+            router_name: router.name,
+            router_ip: router.ipAddress
+        });
     };
 
     const renderRouterMarker = (router) => (
@@ -205,6 +231,30 @@ const MapPage = () => {
             </View>
         );
     };
+
+    useEffect(() => {
+        const startTime = Date.now();
+
+        return () => {
+            const duration = Date.now() - startTime;
+
+            const eventName = 'map_session_duration';
+
+            // Log session duration to Firebase Analytics
+            analytics().logEvent(eventName, {
+                duration: duration
+            }).then(() => {
+                console.log(`Firebase Analytics event logged: ${eventName}`);
+            }).catch((error) => {
+                console.error(`Error logging event to Firebase Analytics: ${error}`);
+            });
+
+            // Log session duration to Amplitude
+            amplitude.track(eventName, {
+                duration: duration
+            });
+        };
+    }, []);
 
     return (
         <View style={styles.container}>

@@ -14,6 +14,7 @@ import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
 
+
 const AppRoutes = ({ logout, userToken, handleLoginSuccess, handleRegisterSuccess }) => {
     const location = useLocation();
     const hideAppBarRoutes = ['/map']; // Add routes here where AppBar should not be shown
