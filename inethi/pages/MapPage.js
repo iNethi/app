@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { Animated, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Ping from 'react-native-ping';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getToken } from '../utils/tokenUtils';
 import { vexo } from 'vexo-analytics';
 import * as amplitude from '@amplitude/analytics-react-native';
@@ -21,6 +22,9 @@ const MapPage = () => {
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
     const [routers, setRouters] = useState([]);
     const [isOffline, setIsOffline] = useState(false);
+    const [circleSize] = useState(new Animated.Value(20));
+    const [zoomLevel, setZoomLevel] = useState(14);
+    const [centerCoordinate, setCenterCoordinate] = useState([18.3605, -34.1428]);
 
     const pingNode = async (ip) => {
         try {
@@ -136,11 +140,8 @@ const MapPage = () => {
         downloadMapRegion();
     }, [isOffline]);
 
-    const [innerCircleSize] = useState(new Animated.Value(10));
-    const [outerCircleSize] = useState(new Animated.Value(20));
-
     const handleMouseEnter = () => {
-        Animated.timing(outerCircleSize, {
+        Animated.timing(circleSize, {
             toValue: 30,
             duration: 300,
             useNativeDriver: false,
@@ -148,7 +149,7 @@ const MapPage = () => {
     };
 
     const handleMouseLeave = () => {
-        Animated.timing(outerCircleSize, {
+        Animated.timing(circleSize, {
             toValue: 20,
             duration: 300,
             useNativeDriver: false,
@@ -190,22 +191,20 @@ const MapPage = () => {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <View style={styles.markerContainer}>
-                    <Animated.View
-                        style={[
-                            styles.outerCircle,
-                            {
-                                width: outerCircleSize,
-                                height: outerCircleSize,
-                                borderRadius: outerCircleSize.interpolate({
-                                    inputRange: [0, 100],
-                                    outputRange: [0, 50],
-                                }),
-                            },
-                        ]}
-                    />
-                    <View style={styles.innerCircle} />
-                </View>
+                <Animated.View
+                    style={[
+                        styles.markerContainer,
+                        {
+                            width: circleSize,
+                            height: circleSize,
+                            borderRadius: circleSize.interpolate({
+                                inputRange: [0, 100],
+                                outputRange: [0, 50],
+                            }),
+                            backgroundColor: router.status === 'online' ? 'green' : 'red',
+                        },
+                    ]}
+                />
             </TouchableOpacity>
         </MapboxGL.PointAnnotation>
     );
@@ -231,6 +230,21 @@ const MapPage = () => {
             </View>
         );
     };
+
+    const handleZoomIn = () => {
+        setZoomLevel((prevZoomLevel) => Math.min(prevZoomLevel + 1, 18));
+    };
+
+    const handleZoomOut = () => {
+        setZoomLevel((prevZoomLevel) => Math.max(prevZoomLevel - 1, 10));
+    };
+
+    const onMapIdle = async () => {
+        const center = await mapRef.current.getCenter();
+        setCenterCoordinate(center);
+    };
+
+    const mapRef = React.useRef(null);
 
     useEffect(() => {
         const startTime = Date.now();
@@ -263,17 +277,16 @@ const MapPage = () => {
                 <Appbar.Content title="Find Nearest Hotspot" titleStyle={styles.appbarTitle} />
             </Appbar.Header>
             <MapboxGL.MapView
+                ref={mapRef}
                 style={styles.map}
                 zoomEnabled={true}
                 scrollEnabled={true}
                 styleURL={isOffline ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Outdoors}
-                onWillStartLoadingMap={() => {
-                    console.log(isOffline ? 'Using offline Mapbox' : 'Using online Mapbox');
-                }}
+                onMapIdle={onMapIdle}
             >
                 <MapboxGL.Camera
-                    zoomLevel={14}
-                    centerCoordinate={[18.3605, -34.1428]} // Adjusted coordinates to focus more on Ocean View
+                    zoomLevel={zoomLevel}
+                    centerCoordinate={centerCoordinate}
                     bounds={{
                         ne: [18.3685, -34.1278],
                         sw: [18.3485, -34.1478],
@@ -282,6 +295,14 @@ const MapPage = () => {
                 {routers.map(renderRouterMarker)}
             </MapboxGL.MapView>
             {renderPopup()}
+            <View style={styles.zoomControl}>
+                <TouchableOpacity onPress={handleZoomIn} style={styles.zoomButton}>
+                    <MaterialCommunityIcons name="plus" size={30} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleZoomOut} style={styles.zoomButton}>
+                    <MaterialCommunityIcons name="minus" size={30} color="white" />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -298,18 +319,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    innerCircle: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: 'black',
-    },
-    outerCircle: {
-        position: 'absolute',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     appbarTitle: {
-        color: '#4285F4', // Updated to match the blue shade used in the app
+        color: '#4285F4',
     },
     popupContainer: {
         position: 'absolute',
@@ -318,6 +329,18 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 10,
         zIndex: 1000,
+    },
+    zoomControl: {
+        position: 'absolute',
+        right: 10,
+        bottom: 30,
+        flexDirection: 'column',
+    },
+    zoomButton: {
+        backgroundColor: '#4285F4',
+        borderRadius: 50,
+        padding: 10,
+        marginBottom: 10,
     },
 });
 

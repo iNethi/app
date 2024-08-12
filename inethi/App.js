@@ -13,7 +13,10 @@ import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
+import { vexo } from 'vexo-analytics';
 
+// You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
+vexo('707528fb-5be6-49d1-9a78-5afe749580cc');
 
 const AppRoutes = ({ logout, userToken, handleLoginSuccess, handleRegisterSuccess }) => {
     const location = useLocation();
