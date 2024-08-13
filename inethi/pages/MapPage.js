@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Animated, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Animated, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
@@ -25,6 +25,10 @@ const MapPage = () => {
     const [circleSize] = useState(new Animated.Value(20));
     const [zoomLevel, setZoomLevel] = useState(14);
     const [centerCoordinate, setCenterCoordinate] = useState([18.3605, -34.1428]);
+    const [pinLocation, setPinLocation] = useState(null);
+    const [dragging, setDragging] = useState(false);
+    const [nearestNode, setNearestNode] = useState(null);
+    const [pathCoordinates, setPathCoordinates] = useState([]);
 
     const pingNode = async (ip) => {
         try {
@@ -209,6 +213,39 @@ const MapPage = () => {
         </MapboxGL.PointAnnotation>
     );
 
+    const renderPinnedMarker = () => (
+        pinLocation && (
+            <MapboxGL.PointAnnotation
+                id="pinned-location"
+                coordinate={pinLocation}
+                draggable
+                onDragStart={() => setDragging(true)}
+                onDragEnd={handleDragEnd}
+            >
+                <View style={styles.pinnedMarker}>
+                    <Image
+                        source={{ uri: 'https://img.icons8.com/ios-filled/50/000000/standing-man.png' }}
+                        style={styles.pinImage}
+                    />
+                </View>
+            </MapboxGL.PointAnnotation>
+        )
+    );
+
+    const renderPath = () => (
+        pathCoordinates.length > 0 && (
+            <MapboxGL.ShapeSource id="pathSource" shape={{
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: pathCoordinates
+                }
+            }}>
+                <MapboxGL.LineLayer id="pathLayer" style={styles.pathStyle} />
+            </MapboxGL.ShapeSource>
+        )
+    );
+
     const renderPopup = () => {
         if (!selectedRouter) return null;
         return (
@@ -242,6 +279,57 @@ const MapPage = () => {
     const onMapIdle = async () => {
         const center = await mapRef.current.getCenter();
         setCenterCoordinate(center);
+    };
+
+    const calculateDistance = (coord1, coord2) => {
+        const [lon1, lat1] = coord1;
+        const [lon2, lat2] = coord2;
+        return Math.sqrt(Math.pow(lon2 - lon1, 2) + Math.pow(lat2 - lat1, 2));
+    };
+
+    const findNearestOnlineNode = (location) => {
+        let minDistance = Infinity;
+        let nearest = null;
+        routers.forEach(router => {
+            if (router.status === 'online') {
+                const distance = calculateDistance(location, router.coordinates);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = router.coordinates;
+                }
+            }
+        });
+        return nearest;
+    };
+
+    const handleDragEnd = (e) => {
+        const { geometry } = e;
+        const newLocation = geometry.coordinates;
+        setPinLocation(newLocation);
+        setDragging(false);
+
+        const nearest = findNearestOnlineNode(newLocation);
+        if (nearest) {
+            setNearestNode(nearest);
+            setPathCoordinates([newLocation, nearest]);
+        } else {
+            setPathCoordinates([]);
+        }
+    };
+
+    const handleMapPress = (e) => {
+        if (dragging) return; // Prevent placing pin while dragging
+        const { geometry } = e;
+        const newLocation = geometry.coordinates;
+        setPinLocation(newLocation);
+
+        const nearest = findNearestOnlineNode(newLocation);
+        if (nearest) {
+            setNearestNode(nearest);
+            setPathCoordinates([newLocation, nearest]);
+        } else {
+            setPathCoordinates([]);
+        }
     };
 
     const mapRef = React.useRef(null);
@@ -283,6 +371,7 @@ const MapPage = () => {
                 scrollEnabled={true}
                 styleURL={isOffline ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Outdoors}
                 onMapIdle={onMapIdle}
+                onPress={handleMapPress}
             >
                 <MapboxGL.Camera
                     zoomLevel={zoomLevel}
@@ -293,6 +382,8 @@ const MapPage = () => {
                     }}
                 />
                 {routers.map(renderRouterMarker)}
+                {renderPinnedMarker()}
+                {renderPath()}
             </MapboxGL.MapView>
             {renderPopup()}
             <View style={styles.zoomControl}>
@@ -303,6 +394,19 @@ const MapPage = () => {
                     <MaterialCommunityIcons name="minus" size={30} color="white" />
                 </TouchableOpacity>
             </View>
+            {!pinLocation && (
+                <View style={styles.floatingPinContainer}>
+                    <TouchableOpacity
+                        style={styles.floatingPin}
+                        onPress={() => setPinLocation(centerCoordinate)}
+                    >
+                        <Image
+                            source={{ uri: 'https://img.icons8.com/ios-filled/50/000000/standing-man.png' }}
+                            style={styles.pinImage}
+                        />
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 };
@@ -319,6 +423,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    pinnedMarker: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    pinImage: {
+        width: 40,
+        height: 40,
+    },
     appbarTitle: {
         color: '#4285F4',
     },
@@ -333,7 +445,7 @@ const styles = StyleSheet.create({
     zoomControl: {
         position: 'absolute',
         right: 10,
-        bottom: 30,
+        bottom: 80,
         flexDirection: 'column',
     },
     zoomButton: {
@@ -341,6 +453,21 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         padding: 10,
         marginBottom: 10,
+    },
+    floatingPinContainer: {
+        position: 'absolute',
+        bottom: 10,
+        right: 10,
+        alignItems: 'center',
+    },
+    floatingPin: {
+        backgroundColor: '#fff',
+        borderRadius: 50,
+        padding: 10,
+    },
+    pathStyle: {
+        lineColor: 'blue',
+        lineWidth: 3,
     },
 });
 
