@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
-import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react-native-paper';
+import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
 import { getToken } from '../utils/tokenUtils';
 import { useBalance } from '../context/BalanceContext'; // Import useBalance
+import Clipboard from '@react-native-clipboard/clipboard';
+import QRCode from 'react-native-qrcode-svg';
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -22,12 +24,14 @@ const HomePage = ({ logout }) => {
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
   const { balance, fetchBalance } = useBalance(); // Destructure balance and fetchBalance
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
       { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
+      { name: "Wallet QR Code", action: () => handleShowQrCode(), requiresWallet: true },
     ],
   });
 
@@ -77,6 +81,8 @@ const HomePage = ({ logout }) => {
       }
     }
   };
+
+
 
   const checkWalletOwnership = async () => {
 
@@ -152,6 +158,11 @@ const HomePage = ({ logout }) => {
   const handleCheckWalletDetails = async () => {
     await fetchWalletDetails();
     setIsDetailDialogOpen(true);
+  };
+
+  const handleShowQrCode = async () => {
+    await fetchWalletDetails();
+    setIsQrDialogOpen(true);
   };
 
   const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
@@ -305,6 +316,44 @@ const HomePage = ({ logout }) => {
               <Button onPress={handleCreateWallet}>Create</Button>
             </Dialog.Actions>
           </Dialog>
+
+          {/* QR Code Dialog */}
+          <Dialog visible={isQrDialogOpen} onDismiss={() => setIsQrDialogOpen(false)}>
+            <Dialog.Title>Wallet QR Code</Dialog.Title>
+            <Dialog.Content>
+              {isLoading ? (
+                  <ActivityIndicator size="large" />
+              ) : walletDetails ? (
+                  <View style={styles.qrCodeContainer}>
+                    <QRCode
+                        value={walletDetails.wallet_address}
+                        size={200}
+                    />
+                    <View style={styles.walletAddressContainer}>
+                      <Paragraph style={styles.walletAddress}>Wallet Address: {walletDetails.wallet_address}</Paragraph>
+                      <IconButton
+                          icon="content-copy"
+                          size={20}
+                          onPress={() => {
+                            Clipboard.setString(walletDetails.wallet_address);
+                            Alert.alert('Copied', 'Wallet address copied to clipboard');
+                          }}
+                      />
+                    </View>
+
+
+                  </View>
+              ) : detailsError ? (
+                  <Paragraph>{detailsError}</Paragraph>
+              ) : (
+                  <Paragraph>Failed to load wallet details.</Paragraph>
+              )}
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setIsQrDialogOpen(false)}>Close</Button>
+            </Dialog.Actions>
+          </Dialog>
+
           <Dialog visible={isBalanceDialogOpen} onDismiss={() => setIsDetailDialogOpen(false)}>
             <Dialog.Title>Wallet Details</Dialog.Title>
             <Dialog.Content>
@@ -312,7 +361,17 @@ const HomePage = ({ logout }) => {
                   <ActivityIndicator size="large" />
               ) : walletDetails ? (
                   <>
-                    <Paragraph>Wallet Address: {walletDetails.wallet_address}</Paragraph>
+                    <View style={styles.walletAddressContainer}>
+                      <Paragraph style={styles.walletAddress}>Wallet Address: {walletDetails.wallet_address}</Paragraph>
+                      <IconButton
+                          icon="content-copy"
+                          size={20}
+                          onPress={() => {
+                            Clipboard.setString(walletDetails.wallet_address);
+                            Alert.alert('Copied', 'Wallet address copied to clipboard');
+                          }}
+                      />
+                    </View>
                     <Paragraph>Balance: {walletDetails.balance}</Paragraph>
                   </>
               ) : detailsError ? (
@@ -379,6 +438,18 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 8,
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  walletAddress: {
+    flex: 1,
   },
 });
 
