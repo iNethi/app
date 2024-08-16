@@ -18,7 +18,6 @@ const HomePage = ({ logout }) => {
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
   const [walletName, setWalletName] = useState('');
   const [error, setError] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
@@ -28,7 +27,11 @@ const HomePage = ({ logout }) => {
 
   const [categories, setCategories] = useState({
     Wallet: [
-      { name: "Create Wallet", action: () => handleCreateWalletClick() },
+      {
+        name: "Create Wallet",
+        action: () => handleCreateWalletClick(),
+        disabled: hasWallet
+      },
       { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
       { name: "Wallet QR Code", action: () => handleShowQrCode(), requiresWallet: true },
@@ -239,6 +242,20 @@ const HomePage = ({ logout }) => {
     };
     initialize();
   }, []);
+  useEffect(() => {
+    setCategories({
+      Wallet: [
+        {
+          name: "Create Wallet",
+          action: () => handleCreateWalletClick(),
+          disabled: hasWallet // Disable if the user already has a wallet
+        },
+        { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
+        { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
+        { name: "Wallet QR Code", action: () => handleShowQrCode(), requiresWallet: true },
+      ],
+    });
+  }, [hasWallet]); // Update categories whenever hasWallet changes
 
   const openURL = (url) => {
     navigate('/webview', { state: { url } });
@@ -250,16 +267,16 @@ const HomePage = ({ logout }) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
           <View key={i} style={styles.buttonRow}>
-            {pair.map(({ name, action, url, requiresWallet }, idx) => {
-              const isDisabled = requiresWallet && !hasWallet;
+            {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
+              const isDisabled = (requiresWallet && !hasWallet) || disabled;
               return (
                   <Button
                       key={idx}
                       mode="contained"
                       onPress={() => {
-                        if (action) {
+                        if (action && !isDisabled) {
                           action();
-                        } else if (url) {
+                        } else if (url && !isDisabled) {
                           openURL(url);
                         } else {
                           console.error('Button has no action or URL');
@@ -278,6 +295,7 @@ const HomePage = ({ logout }) => {
     }
     return buttonRows;
   };
+
 
   const renderCategoryCards = () => (
       Object.entries(categories).map(([category, buttons], index) => (
