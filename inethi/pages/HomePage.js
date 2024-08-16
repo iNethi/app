@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
 import { getToken } from '../utils/tokenUtils';
-import { useBalance } from '../context/BalanceContext'; // Import useBalance
+import { useBalance } from '../context/BalanceContext';
+import ServiceContainer from '../components/ServiceContainer';
+import * as amplitude from '@amplitude/analytics-react-native';
+import analytics from '@react-native-firebase/analytics';
+
+amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -16,18 +21,20 @@ const HomePage = ({ logout }) => {
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
   const [walletName, setWalletName] = useState('');
   const [error, setError] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
-  const { balance, fetchBalance } = useBalance(); // Destructure balance and fetchBalance
+  const { balance, fetchBalance } = useBalance();
 
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
       { name: "Wallet Details", action: () => handleCheckWalletDetails(), requiresWallet: true },
       { name: "Transfer", action: () => navigate('/payment'), requiresWallet: true },
+    ],
+    Navigator: [
+      { name: "FindHotspot", action: () => handleFindHotspotClick() },
     ],
   });
 
@@ -45,9 +52,9 @@ const HomePage = ({ logout }) => {
         },
       };
       const response = await axios.post(
-          `${baseURL}${walletCreateEndpoint}`,
-          { wallet_name: walletName },
-          config
+        `${baseURL}${walletCreateEndpoint}`,
+        { wallet_name: walletName },
+        config
       );
       setIsCreateWalletDialogOpen(false);
       if (response.status === 201) {
@@ -79,7 +86,6 @@ const HomePage = ({ logout }) => {
   };
 
   const checkWalletOwnership = async () => {
-
     try {
       const token = await getToken();
       if (!token) {
@@ -96,9 +102,7 @@ const HomePage = ({ logout }) => {
 
       const response = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
       setHasWallet(response.data.has_wallet);
-
     } catch (error) {
-
       console.error('Error checking wallet ownership:', error);
       if (error.response) {
         if (error.response.status === 401) {
@@ -136,7 +140,7 @@ const HomePage = ({ logout }) => {
           Alert.alert('Error', 'Authentication credentials were not provided.');
         } else if (error.response.status === 404) {
           Alert.alert('Error', 'User does not exist.');
-        }else if (error.response.status === 417) {
+        } else if (error.response.status === 417) {
           Alert.alert('Error', 'User does not have a wallet.');
         } else if (error.response.status === 500) {
           Alert.alert('Error', 'Error checking wallet details. Please contact iNethi support.');
@@ -152,6 +156,42 @@ const HomePage = ({ logout }) => {
   const handleCheckWalletDetails = async () => {
     await fetchWalletDetails();
     setIsDetailDialogOpen(true);
+  };
+
+  const handleFindHotspotClick = () => {
+    const eventName = 'find_hotspot_button_clicked';
+
+    // Log event to Firebase Analytics
+    analytics().logEvent(eventName, {
+      button: 'FindHotspot'
+    }).then(() => {
+      console.log(`Firebase Analytics event logged: ${eventName}`);
+    }).catch((error) => {
+      console.error(`Error logging event to Firebase Analytics: ${error}`);
+    });
+
+    // Log event to Amplitude
+    amplitude.track(eventName, {
+      button: 'FindHotspot'
+    });
+
+    const navigateEventName = 'navigate_to_map';
+
+    // Log event to Firebase Analytics
+    analytics().logEvent(navigateEventName, {
+      feature: 'Map'
+    }).then(() => {
+      console.log(`Firebase Analytics event logged: ${navigateEventName}`);
+    }).catch((error) => {
+      console.error(`Error logging event to Firebase Analytics: ${error}`);
+    });
+
+    // Log event to Amplitude
+    amplitude.track(navigateEventName, {
+      feature: 'Map'
+    });
+
+    navigate('/map');
   };
 
   const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
@@ -204,6 +244,7 @@ const HomePage = ({ logout }) => {
 
       setCategories(prevCategories => ({
         Wallet: prevCategories.Wallet,
+        Navigator: prevCategories.Navigator,
         ...fetchedCategories
       }));
     } catch (err) {
@@ -211,6 +252,7 @@ const HomePage = ({ logout }) => {
       setError(`Failed to fetch services: ${err.message}`);
     }
   };
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -225,7 +267,7 @@ const HomePage = ({ logout }) => {
       } finally {
         setIsLoading(false);
       }
-    };
+    }
     initialize();
   }, []);
 
@@ -238,102 +280,104 @@ const HomePage = ({ logout }) => {
     for (let i = 0; i < buttons.length; i += 2) {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
-          <View key={i} style={styles.buttonRow}>
-            {pair.map(({ name, action, url, requiresWallet }, idx) => {
-              const isDisabled = requiresWallet && !hasWallet;
-              return (
-                  <Button
-                      key={idx}
-                      mode="contained"
-                      onPress={() => {
-                        if (action) {
-                          action();
-                        } else if (url) {
-                          openURL(url);
-                        } else {
-                          console.error('Button has no action or URL');
-                        }
-                      }}
-                      style={[styles.button, isDisabled && styles.buttonDisabled]}
-                      labelStyle={isDisabled ? styles.buttonTextDisabled : styles.buttonText}
-                      disabled={isDisabled}
-                  >
-                    {name}
-                  </Button>
-              );
-            })}
-          </View>
+        <View key={i} style={styles.buttonRow}>
+          {pair.map(({ name, action, url, requiresWallet }, idx) => {
+            const isDisabled = requiresWallet && !hasWallet;
+            return (
+              <Button
+                key={idx}
+                mode="contained"
+                onPress={() => {
+                  if (action) {
+                    action();
+                  } else if (url) {
+                    openURL(url);
+                  } else {
+                    console.error('Button has no action or URL');
+                  }
+                }}
+                style={[styles.button, isDisabled && styles.buttonDisabled]}
+                labelStyle={isDisabled ? styles.buttonTextDisabled : styles.buttonText}
+                disabled={isDisabled}
+              >
+                {name}
+              </Button>
+            );
+          })}
+        </View>
       );
     }
     return buttonRows;
   };
 
   const renderCategoryCards = () => (
-      Object.entries(categories).map(([category, buttons], index) => (
-          <Card key={index} style={styles.card}>
-            <Card.Content>
-              <Title style={styles.title}>{category}</Title>
-              {renderButtons(buttons)}
-            </Card.Content>
-          </Card>
-      ))
+    Object.entries(categories).map(([category, buttons], index) => (
+      <Card key={index} style={styles.card}>
+        <Card.Content>
+          <Title style={styles.title}>{category}</Title>
+          {renderButtons(buttons)}
+        </Card.Content>
+      </Card>
+    ))
   );
 
   return (
-      <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <Image
-              source={require('../assets/images/inethi-logo-large.png')}
-          />
-        </View>
-
-        {renderCategoryCards()}
-        <Portal>
-          <Dialog visible={isCreateWalletDialogOpen} onDismiss={() => setIsCreateWalletDialogOpen(false)}>
-            <Dialog.Title>Create Wallet</Dialog.Title>
-            <Dialog.Content>
-              <Paragraph>Please enter a name for your new wallet.</Paragraph>
-              <TextInput
-                  label="Wallet Name"
-                  value={walletName}
-                  onChangeText={text => setWalletName(text)}
-                  style={styles.input}
-              />
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={() => setIsCreateWalletDialogOpen(false)}>Cancel</Button>
-              <Button onPress={handleCreateWallet}>Create</Button>
-            </Dialog.Actions>
-          </Dialog>
-          <Dialog visible={isBalanceDialogOpen} onDismiss={() => setIsDetailDialogOpen(false)}>
-            <Dialog.Title>Wallet Details</Dialog.Title>
-            <Dialog.Content>
-              {isLoading ? (
-                  <ActivityIndicator size="large" />
-              ) : walletDetails ? (
-                  <>
-                    <Paragraph>Wallet Address: {walletDetails.wallet_address}</Paragraph>
-                    <Paragraph>Balance: {walletDetails.balance}</Paragraph>
-                  </>
-              ) : detailsError ? (
-                  <Paragraph>{detailsError}</Paragraph>
-              ) : (
-                  <Paragraph>Failed to load wallet details.</Paragraph>
-              )}
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
-            </Dialog.Actions>
-          </Dialog>
-          {isLoading && (
-              <Dialog visible={true}>
-                <Dialog.Content>
-                  <ActivityIndicator size="large" />
-                </Dialog.Content>
-              </Dialog>
-          )}
-        </Portal>
+    <ScrollView style={styles.container}>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../assets/images/inethi-logo-large.png')}
+        />
       </View>
+      {renderCategoryCards()}
+      <View style={styles.card}>
+        <ServiceContainer />
+      </View>
+      <Portal>
+        <Dialog visible={isCreateWalletDialogOpen} onDismiss={() => setIsCreateWalletDialogOpen(false)}>
+          <Dialog.Title>Create Wallet</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>Please enter a name for your new wallet.</Paragraph>
+            <TextInput
+              label="Wallet Name"
+              value={walletName}
+              onChangeText={text => setWalletName(text)}
+              style={styles.input}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsCreateWalletDialogOpen(false)}>Cancel</Button>
+            <Button onPress={handleCreateWallet}>Create</Button>
+          </Dialog.Actions>
+        </Dialog>
+        <Dialog visible={isBalanceDialogOpen} onDismiss={() => setIsDetailDialogOpen(false)}>
+          <Dialog.Title>Wallet Details</Dialog.Title>
+          <Dialog.Content>
+            {isLoading ? (
+              <ActivityIndicator size="large" />
+            ) : walletDetails ? (
+              <>
+                <Paragraph>Wallet Address: {walletDetails.wallet_address}</Paragraph>
+                <Paragraph>Balance: {walletDetails.balance}</Paragraph>
+              </>
+            ) : detailsError ? (
+              <Paragraph>{detailsError}</Paragraph>
+            ) : (
+              <Paragraph>Failed to load wallet details.</Paragraph>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+        {isLoading && (
+          <Dialog visible={true}>
+            <Dialog.Content>
+              <ActivityIndicator size="large" />
+            </Dialog.Content>
+          </Dialog>
+        )}
+      </Portal>
+    </ScrollView>
   );
 };
 
