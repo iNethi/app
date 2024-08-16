@@ -12,7 +12,7 @@ sudo update-alternatives --config javac
 
 ### Keycloak Essentials
 1. Make sure refresh tokes are enabled
-2. Your user is granted offline access else you cannot use the refresh tokena
+2. Your user is granted offline access else you cannot use the refresh token
 3. Your user has the 'create_wallet' role.
 
 ## Running the code
