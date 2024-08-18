@@ -29,7 +29,6 @@ const HomePage = ({ logout }) => {
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
 
-  // Ensure the categories state is initialized here
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
@@ -371,20 +370,34 @@ const HomePage = ({ logout }) => {
     ))
   );
 
-  const InternetDataCard = () => (
-    <Card style={styles.internetDataCard}>
-      <View style={styles.internetDataContent}>
-        <Ionicons name="download-outline" size={30} color="#FFFFFF" />
-        <View>
-          <Text style={styles.internetDataTitle}>Internet Data</Text>
-          <Text style={styles.internetDataText}>20GB left of 20GB Data</Text>
+  const InternetDataCard = () => {
+    const totalData = 20; // Total data in GB
+    const remainingData = 19; // Remaining data in GB
+    const usedData = totalData - remainingData;
+    const progress = remainingData / totalData;
+
+    return (
+      <Card style={styles.internetDataCard}>
+        <View style={styles.internetDataContent}>
+          <Ionicons name="download-outline" size={30} color="#FFFFFF" />
+          <View>
+            <Text style={styles.internetDataTitle}>Internet Data</Text>
+            <Text style={styles.internetDataText}>
+              {remainingData}GB left of {totalData}GB Data
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.internetDataBarContainer}>
-        <View style={styles.internetDataBar} />
-      </View>
-    </Card>
-  );
+        <View style={styles.internetDataBarContainer}>
+          <View
+            style={[
+              styles.internetDataBar,
+              { width: `${progress * 100}%`, backgroundColor: progress > 0.5 ? '#76c7c0' : '#ff9800' },
+            ]}
+          />
+        </View>
+      </Card>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -576,11 +589,12 @@ const styles = StyleSheet.create({
   },
   internetDataBarContainer: {
     marginTop: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 5,
   },
   internetDataBar: {
     height: 5,
     borderRadius: 5,
-    backgroundColor: '#FFFFFF',
   },
 });
 
