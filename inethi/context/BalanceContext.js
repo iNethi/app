@@ -1,47 +1,55 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {createContext, useContext, useState, useEffect} from 'react';
 import axios from 'axios';
-import { getToken } from '../utils/tokenUtils';
+import {getToken} from '../utils/tokenUtils';
 
 const BalanceContext = createContext();
 
-export const BalanceProvider = ({ children, logout }) => {
-    const [balance, setBalance] = useState('Loading...');
-    const baseURL = 'https://manage-backend.inethicloud.net';
-    const balanceEndpoint = '/wallet/balance/';
-    const walletOwnershipEndpoint = '/wallet/ownership/';
+export const BalanceProvider = ({children, logout}) => {
+  const [balance, setBalance] = useState('Loading...');
+  // const baseURL = 'https://manage-backend.inethicloud.net';
+  const baseURL = 'http://172.16.13.141:9000';
 
-    const fetchBalance = async () => {
-        try {
-            const token = await getToken(logout);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            };
+  const balanceEndpoint = '/wallet/balance/';
+  const walletOwnershipEndpoint = '/wallet/ownership/';
 
-            const ownershipResponse = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
-            if (ownershipResponse.data.has_wallet) {
-                const balanceResponse = await axios.get(`${baseURL}${balanceEndpoint}`, config);
-                setBalance(balanceResponse.data.balance);
-            } else {
-                setBalance(0);
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            setBalance('Error fetching balance');
-        }
-    };
+  const fetchBalance = async () => {
+    try {
+      const token = await getToken(logout);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      };
 
-    useEffect(() => {
-        fetchBalance();
-    }, []);
+      const ownershipResponse = await axios.get(
+        `${baseURL}${walletOwnershipEndpoint}`,
+        config,
+      );
+      if (ownershipResponse.data.has_wallet) {
+        const balanceResponse = await axios.get(
+          `${baseURL}${balanceEndpoint}`,
+          config,
+        );
+        setBalance(balanceResponse.data.balance);
+      } else {
+        setBalance(0);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setBalance('Error fetching balance');
+    }
+  };
 
-    return (
-        <BalanceContext.Provider value={{ balance, fetchBalance }}>
-            {children}
-        </BalanceContext.Provider>
-    );
+  useEffect(() => {
+    fetchBalance();
+  }, []);
+
+  return (
+    <BalanceContext.Provider value={{balance, fetchBalance}}>
+      {children}
+    </BalanceContext.Provider>
+  );
 };
 
 export const useBalance = () => useContext(BalanceContext);
