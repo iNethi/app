@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  IconButton,
 } from 'react-native';
 import {
   Button,
@@ -47,6 +48,7 @@ const WalletCategoriesPage = () => {
   const handleCreateWalletClick = () => {
     setIsCreateWalletDialogOpen(true);
   };
+
   const fetchWalletDetails = async () => {
     setIsLoading(true);
     try {
