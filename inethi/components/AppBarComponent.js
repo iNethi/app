@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, View, StyleSheet, Image } from 'react-native';
 import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
-import { View, Text, StyleSheet } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useBalance } from '../context/BalanceContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const NETWORK_SERVICE_URL = 'https://nextcloud.inethicloud.net/'; // Replace with your network service URL
 
 const AppBarComponent = ({ logout }) => {
   const { balance } = useBalance();
-  const [isConnected, setIsConnected] = useState(true);
   const [visible, setVisible] = useState(false);
+  const [infoVisible, setInfoVisible] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
 
   const checkConnection = async () => {
@@ -20,19 +20,15 @@ const AppBarComponent = ({ logout }) => {
       if (state.isConnected) {
         const response = await fetch(NETWORK_SERVICE_URL);
         if (response.ok) {
-          setIsConnected(true);
           setVisible(false);
           await AsyncStorage.removeItem('hasShownNetworkDialog'); // Clear dialog state
         } else {
-          setIsConnected(false);
           showDialogIfNotShown();
         }
       } else {
-        setIsConnected(false);
         showDialogIfNotShown();
       }
     } catch (error) {
-      setIsConnected(false);
       showDialogIfNotShown();
     }
   };
@@ -70,21 +66,31 @@ const AppBarComponent = ({ logout }) => {
     await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
   };
 
+  const handleInfoPress = () => {
+    setInfoVisible(true);
+  };
+
+  const hideInfoDialog = () => {
+    setInfoVisible(false);
+  };
+
   return (
     <>
       <Appbar.Header style={styles.appBar}>
         <View style={styles.content}>
-          <View>
-            <Text style={styles.text}>{balance}</Text>
+          <Image
+            source={require('../assets/images/inethitransparent.png')} // Update this path as necessary
+            style={styles.logo}
+          />
+          <View style={styles.iconContainer}>
+            <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
+            <MaterialCommunityIcons 
+              name="information-outline" 
+              size={28} 
+              color="#FFFFFF" 
+              onPress={handleInfoPress} 
+            />
           </View>
-          <View>
-            <Text style={styles.text}>Status: {isConnected ? 'Online' : 'Offline'}</Text>
-          </View>
-          <View>
-            <Text style={styles.text}>Data: 1GB</Text>
-            <Text style={styles.text}>Time: 12:00</Text>
-          </View>
-          <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
         </View>
       </Appbar.Header>
       <Portal>
@@ -95,6 +101,16 @@ const AppBarComponent = ({ logout }) => {
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={hideDialog}>OK</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={infoVisible} onDismiss={hideInfoDialog}>
+          <Dialog.Title>Information</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>Here you can add some information for the users, like how to use the app or other important details.</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideInfoDialog}>OK</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -112,8 +128,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  text: {
-    color: '#FFFFFF',
+  logo: {
+    width: 120, // Adjust the width as necessary
+    height: 60, // Adjust the height as necessary
+    resizeMode: 'contain',
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

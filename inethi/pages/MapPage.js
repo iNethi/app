@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Animated, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Image, Text } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
@@ -11,10 +11,16 @@ import { getToken } from '../utils/tokenUtils';
 import { vexo } from 'vexo-analytics';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
+import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
+import { lineString as makeLineString } from '@turf/helpers';
 
 vexo('2240fbec-f5f9-4010-98c8-2375bdaf4509');
 
 MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw');
+
+const directionsClient = MapboxDirectionsFactory({
+    accessToken: 'sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw',
+});
 
 const MapPage = () => {
     const navigate = useNavigate();
@@ -22,13 +28,13 @@ const MapPage = () => {
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
     const [routers, setRouters] = useState([]);
     const [isOffline, setIsOffline] = useState(false);
-    const [circleSize] = useState(new Animated.Value(20));
     const [zoomLevel, setZoomLevel] = useState(14);
     const [centerCoordinate, setCenterCoordinate] = useState([18.3605, -34.1428]);
     const [pinLocation, setPinLocation] = useState(null);
     const [dragging, setDragging] = useState(false);
-    const [nearestNode, setNearestNode] = useState(null);
-    const [pathCoordinates, setPathCoordinates] = useState([]);
+    const [route, setRoute] = useState(null);
+    const [distanceToNode, setDistanceToNode] = useState(null);
+    const mapRef = useRef(null);
 
     const pingNode = async (ip) => {
         try {
@@ -104,60 +110,72 @@ const MapPage = () => {
     }, []);
 
     useEffect(() => {
-        const downloadMapRegion = async () => {
-            if (!isOffline) {
-                const bounds = [
-                    [18.3685, -34.1278], // NE
-                    [18.3485, -34.1478]  // SW
-                ];
-
-                const offlineRegion = {
-                    name: 'offlinePack',
-                    styleURL: MapboxGL.StyleURL.Street,
-                    minZoom: 10,
-                    maxZoom: 18,
-                    bounds
-                };
-
-                const progressListener = (offlineRegion, status) => {
-                    console.log(`Download progress: ${status.percentage}%`, offlineRegion);
-                };
-                const errorListener = (offlineRegion, err) => {
-                    console.error('Error downloading offline pack:', err, offlineRegion);
-                };
-
-                try {
-                    const packs = await MapboxGL.offlineManager.getPacks();
-                    const existingPack = packs.find(pack => pack.name === 'offlinePack');
-                    if (existingPack) {
-                        console.log('Offline pack already exists. Using existing pack.');
-                    } else {
-                        await MapboxGL.offlineManager.createPack(offlineRegion, progressListener, errorListener);
-                        console.log('Created new offline pack.');
-                    }
-                } catch (error) {
-                    console.error('Error creating offline pack:', error);
-                }
+        if (pinLocation && routers.length > 0) {
+            const nearestRouter = findNearestRouter();
+            if (nearestRouter) {
+                fetchDirections(pinLocation, nearestRouter.coordinates);
             }
-        };
+        }
+    }, [pinLocation, routers]);
 
-        downloadMapRegion();
-    }, [isOffline]);
+    const findNearestRouter = () => {
+        const onlineRouters = routers.filter(router => router.status === 'online');
+        if (onlineRouters.length === 0) return null;
 
-    const handleMouseEnter = () => {
-        Animated.timing(circleSize, {
-            toValue: 30,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
+        let nearestRouter = onlineRouters[0];
+        let minDistance = calculateDistance(pinLocation, nearestRouter.coordinates);
+
+        onlineRouters.forEach(router => {
+            const distance = calculateDistance(pinLocation, router.coordinates);
+            if (distance < minDistance) {
+                nearestRouter = router;
+                minDistance = distance;
+            }
+        });
+
+        return nearestRouter;
     };
 
-    const handleMouseLeave = () => {
-        Animated.timing(circleSize, {
-            toValue: 20,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
+    const calculateDistance = (coord1, coord2) => {
+        const [lon1, lat1] = coord1;
+        const [lon2, lat2] = coord2;
+
+        const toRad = (x) => (x * Math.PI) / 180;
+        const R = 6371;
+
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+    };
+
+    const fetchDirections = async (startCoordinates, endCoordinates) => {
+        const request = {
+            waypoints: [
+                { coordinates: startCoordinates },
+                { coordinates: endCoordinates },
+            ],
+            profile: 'walking',
+            geometries: 'geojson',
+        };
+
+        try {
+            const response = await directionsClient.getDirections(request).send();
+            const route = makeLineString(response.body.routes[0].geometry.coordinates);
+            setRoute(route);
+
+            // Calculate the distance and update the state
+            const distance = calculateDistance(startCoordinates, endCoordinates);
+            setDistanceToNode(distance);
+        } catch (error) {
+            console.error('Error fetching directions: ', error);
+        }
     };
 
     const handleMarkerPress = (router, coordinates) => {
@@ -166,7 +184,6 @@ const MapPage = () => {
 
         const eventName = 'view_router_details';
 
-        // Log event to Firebase Analytics
         analytics().logEvent(eventName, {
             router_name: router.name,
             router_ip: router.ipAddress
@@ -176,7 +193,6 @@ const MapPage = () => {
             console.error(`Error logging event to Firebase Analytics: ${error}`);
         });
 
-        // Log event to Amplitude
         amplitude.track(eventName, {
             router_name: router.name,
             router_ip: router.ipAddress
@@ -190,24 +206,11 @@ const MapPage = () => {
             coordinate={router.coordinates}
             onSelected={() => handleMarkerPress(router, router.coordinates)}
         >
-            <TouchableOpacity
-                onPress={() => handleMarkerPress(router, router.coordinates)}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-            >
-                <Animated.View
-                    style={[
-                        styles.markerContainer,
-                        {
-                            width: circleSize,
-                            height: circleSize,
-                            borderRadius: circleSize.interpolate({
-                                inputRange: [0, 100],
-                                outputRange: [0, 50],
-                            }),
-                            backgroundColor: router.status === 'online' ? 'green' : 'red',
-                        },
-                    ]}
+            <TouchableOpacity onPress={() => handleMarkerPress(router, router.coordinates)}>
+                <MaterialCommunityIcons
+                    name={router.status === 'online' ? 'wifi' : 'wifi-off'}
+                    size={30}
+                    color={router.status === 'online' ? 'green' : 'red'}
                 />
             </TouchableOpacity>
         </MapboxGL.PointAnnotation>
@@ -229,20 +232,6 @@ const MapPage = () => {
                     />
                 </View>
             </MapboxGL.PointAnnotation>
-        )
-    );
-
-    const renderPath = () => (
-        pathCoordinates.length > 0 && (
-            <MapboxGL.ShapeSource id="pathSource" shape={{
-                type: 'Feature',
-                geometry: {
-                    type: 'LineString',
-                    coordinates: pathCoordinates
-                }
-            }}>
-                <MapboxGL.LineLayer id="pathLayer" style={styles.pathStyle} />
-            </MapboxGL.ShapeSource>
         )
     );
 
@@ -268,6 +257,22 @@ const MapPage = () => {
         );
     };
 
+    const renderRoute = () => {
+        return route ? (
+            <MapboxGL.ShapeSource id="routeSource" shape={route}>
+                <MapboxGL.LineLayer
+                    id="routeFill"
+                    style={{
+                        lineColor: "#ff8109",
+                        lineWidth: 3.2,
+                        lineCap: MapboxGL.LineJoin.Round,
+                        lineOpacity: 1.84
+                    }}
+                />
+            </MapboxGL.ShapeSource>
+        ) : null;
+    };
+
     const handleZoomIn = () => {
         setZoomLevel((prevZoomLevel) => Math.min(prevZoomLevel + 1, 18));
     };
@@ -281,58 +286,17 @@ const MapPage = () => {
         setCenterCoordinate(center);
     };
 
-    const calculateDistance = (coord1, coord2) => {
-        const [lon1, lat1] = coord1;
-        const [lon2, lat2] = coord2;
-        return Math.sqrt(Math.pow(lon2 - lon1, 2) + Math.pow(lat2 - lat1, 2));
-    };
-
-    const findNearestOnlineNode = (location) => {
-        let minDistance = Infinity;
-        let nearest = null;
-        routers.forEach(router => {
-            if (router.status === 'online') {
-                const distance = calculateDistance(location, router.coordinates);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearest = router.coordinates;
-                }
-            }
-        });
-        return nearest;
-    };
-
     const handleDragEnd = (e) => {
         const { geometry } = e;
-        const newLocation = geometry.coordinates;
-        setPinLocation(newLocation);
+        setPinLocation(geometry.coordinates);
         setDragging(false);
-
-        const nearest = findNearestOnlineNode(newLocation);
-        if (nearest) {
-            setNearestNode(nearest);
-            setPathCoordinates([newLocation, nearest]);
-        } else {
-            setPathCoordinates([]);
-        }
     };
 
     const handleMapPress = (e) => {
         if (dragging) return; // Prevent placing pin while dragging
         const { geometry } = e;
-        const newLocation = geometry.coordinates;
-        setPinLocation(newLocation);
-
-        const nearest = findNearestOnlineNode(newLocation);
-        if (nearest) {
-            setNearestNode(nearest);
-            setPathCoordinates([newLocation, nearest]);
-        } else {
-            setPathCoordinates([]);
-        }
+        setPinLocation(geometry.coordinates);
     };
-
-    const mapRef = React.useRef(null);
 
     useEffect(() => {
         const startTime = Date.now();
@@ -342,7 +306,6 @@ const MapPage = () => {
 
             const eventName = 'map_session_duration';
 
-            // Log session duration to Firebase Analytics
             analytics().logEvent(eventName, {
                 duration: duration
             }).then(() => {
@@ -351,7 +314,6 @@ const MapPage = () => {
                 console.error(`Error logging event to Firebase Analytics: ${error}`);
             });
 
-            // Log session duration to Amplitude
             amplitude.track(eventName, {
                 duration: duration
             });
@@ -383,7 +345,7 @@ const MapPage = () => {
                 />
                 {routers.map(renderRouterMarker)}
                 {renderPinnedMarker()}
-                {renderPath()}
+                {renderRoute()}
             </MapboxGL.MapView>
             {renderPopup()}
             <View style={styles.zoomControl}>
@@ -407,6 +369,16 @@ const MapPage = () => {
                     </TouchableOpacity>
                 </View>
             )}
+            {distanceToNode !== null && (
+                <View style={styles.distanceContainer}>
+                    <Text style={styles.distanceText}>
+                        {distanceToNode >= 1
+                            ? `${distanceToNode.toFixed(2)} km`
+                            : `${(distanceToNode * 1000).toFixed(0)} meters`}
+                        {' '}to nearest node
+                    </Text>
+                </View>
+            )}
         </View>
     );
 };
@@ -418,10 +390,6 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
-    },
-    markerContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     pinnedMarker: {
         alignItems: 'center',
@@ -465,9 +433,17 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         padding: 10,
     },
-    pathStyle: {
-        lineColor: 'blue',
-        lineWidth: 3,
+    distanceContainer: {
+        position: 'absolute',
+        bottom: 80,  // Positioned above the zoom controls
+        left: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: 10,
+        borderRadius: 5,
+    },
+    distanceText: {
+        color: 'white',
+        fontSize: 16,
     },
 });
 
