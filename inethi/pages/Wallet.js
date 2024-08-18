@@ -19,6 +19,8 @@ import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext';
+import Clipboard from '@react-native-clipboard/clipboard';
+import QRCode from 'react-native-qrcode-svg';
 
 const WalletCategoriesPage = () => {
   const baseURL = 'http://172.16.13.141:9000';
@@ -36,6 +38,7 @@ const WalletCategoriesPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
   const [detailsError, setDetailsError] = useState('');
+  const [isBalanceDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   useEffect(() => {
     checkWalletOwnership();

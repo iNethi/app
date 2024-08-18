@@ -21,8 +21,6 @@ import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
-import Clipboard from '@react-native-clipboard/clipboard';
-import QRCode from 'react-native-qrcode-svg';
 import ServiceContainer from '../components/ServiceContainer';
 
 const HomePage = ({logout}) => {
