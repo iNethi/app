@@ -3,9 +3,9 @@ import {
   View,
   StyleSheet,
   Image,
-  ScrollView,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import {
   Button,
@@ -13,17 +13,27 @@ import {
   Title,
   Dialog,
   Portal,
+  TextInput,
   Paragraph,
+  IconButton,
 } from 'react-native-paper';
 import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext';
+import {useBalance} from '../context/BalanceContext'; // Import useBalance
+import Clipboard from '@react-native-clipboard/clipboard';
+import QRCode from 'react-native-qrcode-svg';
 import ServiceContainer from '../components/ServiceContainer';
 
 const HomePage = ({logout}) => {
-  const baseURL = 'http://172.16.13.141:9000';
+  const baseURL = 'https://manage-backend.inethicloud.net';
+
+  const LbaseURL = 'http://172.16.13.141:9000';
   const navigate = useNavigate();
+  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
+    useState(false);
+  const [walletName, setWalletName] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const {balance, fetchBalance} = useBalance();
 
@@ -131,31 +141,37 @@ const HomePage = ({logout}) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, url}, idx) => (
-            <Button
-              key={idx}
-              mode="contained"
-              onPress={() => {
-                if (action) {
-                  action();
-                } else if (url) {
-                  openURL(url);
-                } else {
-                  console.error('Button has no action or URL');
+          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
+            const isDisabled = (requiresWallet && !hasWallet) || disabled;
+            return (
+              <Button
+                key={idx}
+                mode="contained"
+                onPress={() => {
+                  if (action && !isDisabled) {
+                    action();
+                  } else if (url && !isDisabled) {
+                    openURL(url);
+                  } else {
+                    console.error('Button has no action or URL');
+                  }
+                }}
+                style={[styles.button, isDisabled && styles.buttonDisabled]}
+                labelStyle={
+                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
                 }
-              }}
-              style={styles.button}
-              labelStyle={styles.buttonText}>
-              {name}
-            </Button>
-          ))}
+                disabled={isDisabled}>
+                {name}
+              </Button>
+            );
+          })}
         </View>,
       );
     }
     return buttonRows;
   };
 
-  const renderCategoryCards = categories =>
+  const renderCategoryCards = () =>
     Object.entries(categories).map(([category, buttons], index) => (
       <Card key={index} style={styles.card}>
         <Card.Content>
@@ -220,6 +236,21 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     resizeMode: 'contain',
+  },
+  input: {
+    marginBottom: 8,
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  walletAddress: {
+    flex: 1,
   },
 });
 
