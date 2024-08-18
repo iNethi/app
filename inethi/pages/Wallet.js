@@ -35,6 +35,7 @@ const WalletCategoriesPage = () => {
   const [walletName, setWalletName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
+  const [detailsError, setDetailsError] = useState('');
 
   useEffect(() => {
     checkWalletOwnership();
