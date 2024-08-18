@@ -22,13 +22,10 @@ const MapPage = () => {
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
     const [routers, setRouters] = useState([]);
     const [isOffline, setIsOffline] = useState(false);
-    const [circleSize] = useState(new Animated.Value(20));
     const [zoomLevel, setZoomLevel] = useState(14);
     const [centerCoordinate, setCenterCoordinate] = useState([18.3605, -34.1428]);
     const [pinLocation, setPinLocation] = useState(null);
     const [dragging, setDragging] = useState(false);
-    const [nearestNode, setNearestNode] = useState(null);
-    const [pathCoordinates, setPathCoordinates] = useState([]);
 
     const pingNode = async (ip) => {
         try {
@@ -103,63 +100,6 @@ const MapPage = () => {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        const downloadMapRegion = async () => {
-            if (!isOffline) {
-                const bounds = [
-                    [18.3685, -34.1278], // NE
-                    [18.3485, -34.1478]  // SW
-                ];
-
-                const offlineRegion = {
-                    name: 'offlinePack',
-                    styleURL: MapboxGL.StyleURL.Street,
-                    minZoom: 10,
-                    maxZoom: 18,
-                    bounds
-                };
-
-                const progressListener = (offlineRegion, status) => {
-                    console.log(`Download progress: ${status.percentage}%`, offlineRegion);
-                };
-                const errorListener = (offlineRegion, err) => {
-                    console.error('Error downloading offline pack:', err, offlineRegion);
-                };
-
-                try {
-                    const packs = await MapboxGL.offlineManager.getPacks();
-                    const existingPack = packs.find(pack => pack.name === 'offlinePack');
-                    if (existingPack) {
-                        console.log('Offline pack already exists. Using existing pack.');
-                    } else {
-                        await MapboxGL.offlineManager.createPack(offlineRegion, progressListener, errorListener);
-                        console.log('Created new offline pack.');
-                    }
-                } catch (error) {
-                    console.error('Error creating offline pack:', error);
-                }
-            }
-        };
-
-        downloadMapRegion();
-    }, [isOffline]);
-
-    const handleMouseEnter = () => {
-        Animated.timing(circleSize, {
-            toValue: 30,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
-    };
-
-    const handleMouseLeave = () => {
-        Animated.timing(circleSize, {
-            toValue: 20,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
-    };
-
     const handleMarkerPress = (router, coordinates) => {
         setSelectedRouter(router);
         setPopupPosition({ top: coordinates[1], left: coordinates[0] });
@@ -192,22 +132,11 @@ const MapPage = () => {
         >
             <TouchableOpacity
                 onPress={() => handleMarkerPress(router, router.coordinates)}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
             >
-                <Animated.View
-                    style={[
-                        styles.markerContainer,
-                        {
-                            width: circleSize,
-                            height: circleSize,
-                            borderRadius: circleSize.interpolate({
-                                inputRange: [0, 100],
-                                outputRange: [0, 50],
-                            }),
-                            backgroundColor: router.status === 'online' ? 'green' : 'red',
-                        },
-                    ]}
+                <MaterialCommunityIcons
+                    name={router.status === 'online' ? 'wifi' : 'wifi-off'}
+                    size={30}
+                    color={router.status === 'online' ? 'green' : 'red'}
                 />
             </TouchableOpacity>
         </MapboxGL.PointAnnotation>
@@ -229,20 +158,6 @@ const MapPage = () => {
                     />
                 </View>
             </MapboxGL.PointAnnotation>
-        )
-    );
-
-    const renderPath = () => (
-        pathCoordinates.length > 0 && (
-            <MapboxGL.ShapeSource id="pathSource" shape={{
-                type: 'Feature',
-                geometry: {
-                    type: 'LineString',
-                    coordinates: pathCoordinates
-                }
-            }}>
-                <MapboxGL.LineLayer id="pathLayer" style={styles.pathStyle} />
-            </MapboxGL.ShapeSource>
         )
     );
 
@@ -281,55 +196,16 @@ const MapPage = () => {
         setCenterCoordinate(center);
     };
 
-    const calculateDistance = (coord1, coord2) => {
-        const [lon1, lat1] = coord1;
-        const [lon2, lat2] = coord2;
-        return Math.sqrt(Math.pow(lon2 - lon1, 2) + Math.pow(lat2 - lat1, 2));
-    };
-
-    const findNearestOnlineNode = (location) => {
-        let minDistance = Infinity;
-        let nearest = null;
-        routers.forEach(router => {
-            if (router.status === 'online') {
-                const distance = calculateDistance(location, router.coordinates);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearest = router.coordinates;
-                }
-            }
-        });
-        return nearest;
-    };
-
     const handleDragEnd = (e) => {
         const { geometry } = e;
-        const newLocation = geometry.coordinates;
-        setPinLocation(newLocation);
+        setPinLocation(geometry.coordinates);
         setDragging(false);
-
-        const nearest = findNearestOnlineNode(newLocation);
-        if (nearest) {
-            setNearestNode(nearest);
-            setPathCoordinates([newLocation, nearest]);
-        } else {
-            setPathCoordinates([]);
-        }
     };
 
     const handleMapPress = (e) => {
         if (dragging) return; // Prevent placing pin while dragging
         const { geometry } = e;
-        const newLocation = geometry.coordinates;
-        setPinLocation(newLocation);
-
-        const nearest = findNearestOnlineNode(newLocation);
-        if (nearest) {
-            setNearestNode(nearest);
-            setPathCoordinates([newLocation, nearest]);
-        } else {
-            setPathCoordinates([]);
-        }
+        setPinLocation(geometry.coordinates);
     };
 
     const mapRef = React.useRef(null);
@@ -383,7 +259,6 @@ const MapPage = () => {
                 />
                 {routers.map(renderRouterMarker)}
                 {renderPinnedMarker()}
-                {renderPath()}
             </MapboxGL.MapView>
             {renderPopup()}
             <View style={styles.zoomControl}>
@@ -464,10 +339,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 50,
         padding: 10,
-    },
-    pathStyle: {
-        lineColor: 'blue',
-        lineWidth: 3,
     },
 });
 
