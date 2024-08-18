@@ -47,7 +47,50 @@ const WalletCategoriesPage = () => {
   const handleCreateWalletClick = () => {
     setIsCreateWalletDialogOpen(true);
   };
-
+  const fetchWalletDetails = async () => {
+    setIsLoading(true);
+    try {
+      const token = await getToken();
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+      const response = await axios.get(
+        `${baseURL}${walletDetailsEndpoint}`,
+        config,
+      );
+      setWalletDetails(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      if (error.response) {
+        if (error.response.status === 401) {
+          Alert.alert('Error', 'Authentication credentials were not provided.');
+        } else if (error.response.status === 404) {
+          Alert.alert('Error', 'User does not exist.');
+        } else if (error.response.status === 417) {
+          Alert.alert('Error', 'User does not have a wallet.');
+        } else if (error.response.status === 500) {
+          Alert.alert(
+            'Error',
+            'Error checking wallet details. Please contact iNethi support.',
+          );
+        } else {
+          Alert.alert(
+            'Error',
+            `Failed to check wallet details: ${error.message}`,
+          );
+        }
+      } else {
+        Alert.alert(
+          'Error',
+          `Failed to check wallet details: ${error.message}`,
+        );
+      }
+    }
+  };
   const handleCreateWallet = async () => {
     try {
       const token = await getToken();
