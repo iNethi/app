@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
 import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
@@ -8,14 +8,13 @@ import { useBalance } from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
-  const walletCreateEndpoint = '/wallet/create/';
-  const walletOwnershipEndpoint = '/wallet/ownership/';
-  const walletDetailsEndpoint = '/wallet/details/';
+  const nextcloudURL = 'https://nextcloud.inethicloud.net'; // iNethi Nextcloud URL
   const [hasWallet, setHasWallet] = useState(false);
   const navigate = useNavigate();
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
@@ -27,6 +26,10 @@ const HomePage = ({ logout }) => {
   const [detailsError, setDetailsError] = useState('');
   const { balance, fetchBalance } = useBalance();
 
+  const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
+  const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
+
+  // Ensure the categories state is initialized here
   const [categories, setCategories] = useState({
     Wallet: [
       { name: "Create Wallet", action: () => handleCreateWalletClick() },
@@ -37,6 +40,47 @@ const HomePage = ({ logout }) => {
       { name: "FindHotspot", action: () => handleFindHotspotClick() },
     ],
   });
+
+  useEffect(() => {
+    const checkStatuses = async () => {
+      await checkWirelessConnection();
+      await checkInternetConnection();
+    };
+
+    checkStatuses(); // Check statuses when the component mounts
+
+    const intervalId = setInterval(() => {
+      checkStatuses(); // Check statuses every 30 seconds
+    }, 30000);
+
+    return () => clearInterval(intervalId); // Cleanup the interval on component unmount
+  }, []);
+
+  const checkInternetConnection = async () => {
+    try {
+      const response = await fetch('https://www.google.com', { method: 'HEAD' });
+      if (response.ok) {
+        setIsConnectedToInternet(true);
+      } else {
+        setIsConnectedToInternet(false);
+      }
+    } catch (error) {
+      setIsConnectedToInternet(false);
+    }
+  };
+
+  const checkWirelessConnection = async () => {
+    try {
+      const response = await fetch(nextcloudURL, { method: 'HEAD' });
+      if (response.ok) {
+        setIsConnectedToWireless(true);
+      } else {
+        setIsConnectedToWireless(false);
+      }
+    } catch (error) {
+      setIsConnectedToWireless(false);
+    }
+  };
 
   const handleCreateWalletClick = () => {
     setIsCreateWalletDialogOpen(true);
@@ -52,7 +96,7 @@ const HomePage = ({ logout }) => {
         },
       };
       const response = await axios.post(
-        `${baseURL}${walletCreateEndpoint}`,
+        `${baseURL}/wallet/create/`,
         { wallet_name: walletName },
         config
       );
@@ -100,7 +144,7 @@ const HomePage = ({ logout }) => {
         },
       };
 
-      const response = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
+      const response = await axios.get(`${baseURL}/wallet/ownership/`, config);
       setHasWallet(response.data.has_wallet);
     } catch (error) {
       console.error('Error checking wallet ownership:', error);
@@ -130,7 +174,7 @@ const HomePage = ({ logout }) => {
           'Content-Type': 'application/json',
         },
       };
-      const response = await axios.get(`${baseURL}${walletDetailsEndpoint}`, config);
+      const response = await axios.get(`${baseURL}/wallet/details/`, config);
       setWalletDetails(response.data);
       setIsLoading(false);
     } catch (error) {
@@ -299,6 +343,12 @@ const HomePage = ({ logout }) => {
                 style={[styles.button, isDisabled && styles.buttonDisabled]}
                 labelStyle={isDisabled ? styles.buttonTextDisabled : styles.buttonText}
                 disabled={isDisabled}
+                icon={() => {
+                  if (name === 'FindHotspot') {
+                    return <Ionicons name="map-outline" size={20} color="#FFFFFF" />; // Replaced icon with map icon
+                  }
+                  return null;
+                }}
               >
                 {name}
               </Button>
@@ -321,13 +371,62 @@ const HomePage = ({ logout }) => {
     ))
   );
 
+  const InternetDataCard = () => (
+    <Card style={styles.internetDataCard}>
+      <View style={styles.internetDataContent}>
+        <Ionicons name="download-outline" size={30} color="#FFFFFF" />
+        <View>
+          <Text style={styles.internetDataTitle}>Internet Data</Text>
+          <Text style={styles.internetDataText}>20GB left of 20GB Data</Text>
+        </View>
+      </View>
+      <View style={styles.internetDataBarContainer}>
+        <View style={styles.internetDataBar} />
+      </View>
+    </Card>
+  );
+
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/images/inethi-logo-large.png')}
-        />
+      <View style={styles.statusContainer}>
+        <Card style={styles.statusCard}>
+          <View style={styles.statusContent}>
+            <Ionicons name="wifi" size={30} color="#FFFFFF" />
+            <Text style={styles.statusTitle}>iNethi Wireless</Text>
+            <View style={styles.statusIndicatorContainer}>
+              <View
+                style={[
+                  styles.statusIndicator,
+                  { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
+                ]}
+              />
+              <Text style={styles.statusText}>
+                {isConnectedToWireless ? 'Connected' : 'Disconnected'}
+              </Text>
+            </View>
+          </View>
+        </Card>
+        <Card style={styles.statusCard}>
+          <View style={styles.statusContent}>
+            <Ionicons name="globe" size={30} color="#FFFFFF" />
+            <Text style={styles.statusTitle}>Internet</Text>
+            <View style={styles.statusIndicatorContainer}>
+              <View
+                style={[
+                  styles.statusIndicator,
+                  { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
+                ]}
+              />
+              <Text style={styles.statusText}>
+                {isConnectedToInternet ? 'Connected' : 'Disconnected'}
+              </Text>
+            </View>
+          </View>
+        </Card>
       </View>
+
+      <InternetDataCard />
+
       {renderCategoryCards()}
       <View style={styles.card}>
         <ServiceContainer />
@@ -386,6 +485,41 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
   },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 20,
+  },
+  statusCard: {
+    flex: 1,
+    marginHorizontal: 5,
+    backgroundColor: '#4285F4',
+    borderRadius: 10,
+    padding: 10,
+  },
+  statusContent: {
+    alignItems: 'center',
+  },
+  statusTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 10,
+  },
+  statusIndicatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  statusIndicator: {
+    width: 15,
+    height: 15,
+    borderRadius: 7.5,
+    marginRight: 5,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
   card: {
     marginBottom: 10,
   },
@@ -412,17 +546,41 @@ const styles = StyleSheet.create({
   buttonTextDisabled: {
     color: '#A9A9A9',
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-  },
   input: {
     marginBottom: 8,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  internetDataCard: {
+    backgroundColor: '#4285F4',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+  },
+  internetDataContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  internetDataTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  internetDataText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginLeft: 10,
+  },
+  internetDataBarContainer: {
+    marginTop: 10,
+  },
+  internetDataBar: {
+    height: 5,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
   },
 });
 
