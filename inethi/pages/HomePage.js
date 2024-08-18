@@ -1,7 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView,Text  } from 'react-native';
-import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph } from 'react-native-paper';
-import { useNavigate } from 'react-router-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+} from 'react-native';
+import {
+  Button,
+  Card,
+  Title,
+  Dialog,
+  Portal,
+  TextInput,
+  Paragraph,
+} from 'react-native-paper';
+import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
@@ -16,14 +32,10 @@ const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const nextcloudURL = 'https://nextcloud.inethicloud.net'; // iNethi Nextcloud URL
 
-  const walletCreateEndpoint = '/wallet/create/';
-  const walletOwnershipEndpoint = '/wallet/ownership/';
-  const walletDetailsEndpoint = '/wallet/details/';
   const [hasWallet, setHasWallet] = useState(false);
   const navigate = useNavigate();
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
     useState(false);
-  const [walletName, setWalletName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
@@ -38,9 +50,7 @@ const HomePage = ({logout}) => {
         url: '', // Add an empty URL field to maintain structure
       },
     ],
-    Navigator: [
-      { name: "FindHotspot", action: () => handleFindHotspotClick() },
-    ],
+    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
   });
 
   useEffect(() => {
@@ -60,7 +70,7 @@ const HomePage = ({logout}) => {
 
   const checkInternetConnection = async () => {
     try {
-      const response = await fetch('https://www.google.com', { method: 'HEAD' });
+      const response = await fetch('https://www.google.com', {method: 'HEAD'});
       if (response.ok) {
         setIsConnectedToInternet(true);
       } else {
@@ -73,7 +83,7 @@ const HomePage = ({logout}) => {
 
   const checkWirelessConnection = async () => {
     try {
-      const response = await fetch(nextcloudURL, { method: 'HEAD' });
+      const response = await fetch(nextcloudURL, {method: 'HEAD'});
       if (response.ok) {
         setIsConnectedToWireless(true);
       } else {
@@ -84,44 +94,52 @@ const HomePage = ({logout}) => {
     }
   };
 
-  
   const handleFindHotspotClick = () => {
     const eventName = 'find_hotspot_button_clicked';
 
     // Log event to Firebase Analytics
-    analytics().logEvent(eventName, {
-      button: 'FindHotspot'
-    }).then(() => {
-      console.log(`Firebase Analytics event logged: ${eventName}`);
-    }).catch((error) => {
-      console.error(`Error logging event to Firebase Analytics: ${error}`);
-    });
+    analytics()
+      .logEvent(eventName, {
+        button: 'FindHotspot',
+      })
+      .then(() => {
+        console.log(`Firebase Analytics event logged: ${eventName}`);
+      })
+      .catch(error => {
+        console.error(`Error logging event to Firebase Analytics: ${error}`);
+      });
 
     // Log event to Amplitude
     amplitude.track(eventName, {
-      button: 'FindHotspot'
+      button: 'FindHotspot',
     });
 
     const navigateEventName = 'navigate_to_map';
 
     // Log event to Firebase Analytics
-    analytics().logEvent(navigateEventName, {
-      feature: 'Map'
-    }).then(() => {
-      console.log(`Firebase Analytics event logged: ${navigateEventName}`);
-    }).catch((error) => {
-      console.error(`Error logging event to Firebase Analytics: ${error}`);
-    });
+    analytics()
+      .logEvent(navigateEventName, {
+        feature: 'Map',
+      })
+      .then(() => {
+        console.log(`Firebase Analytics event logged: ${navigateEventName}`);
+      })
+      .catch(error => {
+        console.error(`Error logging event to Firebase Analytics: ${error}`);
+      });
 
     // Log event to Amplitude
     amplitude.track(navigateEventName, {
-      feature: 'Map'
+      feature: 'Map',
     });
 
     navigate('/map');
   };
 
-  const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+  const timeout = ms =>
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms),
+    );
 
   const fetchServices = async () => {
     try {
@@ -228,15 +246,18 @@ const HomePage = ({logout}) => {
                   }
                 }}
                 style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={isDisabled ? styles.buttonTextDisabled : styles.buttonText}
+                labelStyle={
+                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
+                }
                 disabled={isDisabled}
                 icon={() => {
                   if (name === 'FindHotspot') {
-                    return <Ionicons name="map-outline" size={20} color="#FFFFFF" />; // Replaced icon with map icon
+                    return (
+                      <Ionicons name="map-outline" size={20} color="#FFFFFF" />
+                    ); // Replaced icon with map icon
                   }
                   return null;
-                }}
-              >
+                }}>
                 {name}
               </Button>
             );
@@ -255,8 +276,7 @@ const HomePage = ({logout}) => {
           {renderButtons(buttons)}
         </Card.Content>
       </Card>
-    ))
-  );
+    ));
 
   const InternetDataCard = () => {
     const totalData = 20; // Total data in GB
@@ -279,7 +299,10 @@ const HomePage = ({logout}) => {
           <View
             style={[
               styles.internetDataBar,
-              { width: `${progress * 100}%`, backgroundColor: progress > 0.5 ? '#76c7c0' : '#ff9800' },
+              {
+                width: `${progress * 100}%`,
+                backgroundColor: progress > 0.5 ? '#76c7c0' : '#ff9800',
+              },
             ]}
           />
         </View>
@@ -298,7 +321,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
+                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
                 ]}
               />
               <Text style={styles.statusText}>
@@ -315,7 +338,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
+                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
                 ]}
               />
               <Text style={styles.statusText}>
@@ -325,6 +348,7 @@ const HomePage = ({logout}) => {
           </View>
         </Card>
       </View>
+      <InternetDataCard />
       {renderCategoryCards(categories)}
       <View style={styles.card}>
         <ServiceContainer />
