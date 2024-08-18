@@ -27,6 +27,7 @@ const WalletCategoriesPage = () => {
   const walletDetailsEndpoint = '/wallet/details/';
   const navigate = useNavigate();
   const {balance, fetchBalance} = useBalance();
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   const [hasWallet, setHasWallet] = useState(false);
   const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
@@ -185,8 +186,17 @@ const WalletCategoriesPage = () => {
     }
   };
 
+  const handleShowQrCode = async () => {
+    await fetchWalletDetails();
+    setIsQrDialogOpen(true);
+  };
+
   const walletCategories = [
-    {name: 'Create Wallet', action: handleCreateWalletClick},
+    {
+      name: 'Create Wallet',
+      action: handleCreateWalletClick,
+      disabled: hasWallet,
+    },
     {
       name: 'Wallet Details',
       action: handleCheckWalletDetails,
@@ -205,6 +215,11 @@ const WalletCategoriesPage = () => {
     {
       name: 'View Recipients',
       action: () => navigate('/view-recipients'),
+      requiresWallet: true,
+    },
+    {
+      name: 'Wallet QR Code',
+      action: () => handleShowQrCode(),
       requiresWallet: true,
     },
   ];
@@ -272,6 +287,82 @@ const WalletCategoriesPage = () => {
             <Button onPress={handleCreateWallet}>Create</Button>
           </Dialog.Actions>
         </Dialog>
+        {/* QR Code Dialog */}
+        <Dialog
+          visible={isQrDialogOpen}
+          onDismiss={() => setIsQrDialogOpen(false)}>
+          <Dialog.Title>Wallet QR Code</Dialog.Title>
+          <Dialog.Content>
+            {isLoading ? (
+              <ActivityIndicator size="large" />
+            ) : walletDetails ? (
+              <View style={styles.qrCodeContainer}>
+                <QRCode value={walletDetails.wallet_address} size={200} />
+                <View style={styles.walletAddressContainer}>
+                  <Paragraph style={styles.walletAddress}>
+                    Wallet Address: {walletDetails.wallet_address}
+                  </Paragraph>
+                  <IconButton
+                    icon="content-copy"
+                    size={20}
+                    onPress={() => {
+                      Clipboard.setString(walletDetails.wallet_address);
+                      Alert.alert(
+                        'Copied',
+                        'Wallet address copied to clipboard',
+                      );
+                    }}
+                  />
+                </View>
+              </View>
+            ) : detailsError ? (
+              <Paragraph>{detailsError}</Paragraph>
+            ) : (
+              <Paragraph>Failed to load wallet details.</Paragraph>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsQrDialogOpen(false)}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+        <Dialog
+          visible={isBalanceDialogOpen}
+          onDismiss={() => setIsDetailDialogOpen(false)}>
+          <Dialog.Title>Wallet Details</Dialog.Title>
+          <Dialog.Content>
+            {isLoading ? (
+              <ActivityIndicator size="large" />
+            ) : walletDetails ? (
+              <>
+                <View style={styles.walletAddressContainer}>
+                  <Paragraph style={styles.walletAddress}>
+                    Wallet Address: {walletDetails.wallet_address}
+                  </Paragraph>
+                  <IconButton
+                    icon="content-copy"
+                    size={20}
+                    onPress={() => {
+                      Clipboard.setString(walletDetails.wallet_address);
+                      Alert.alert(
+                        'Copied',
+                        'Wallet address copied to clipboard',
+                      );
+                    }}
+                  />
+                </View>
+                <Paragraph>Balance: {walletDetails.balance}</Paragraph>
+              </>
+            ) : detailsError ? (
+              <Paragraph>{detailsError}</Paragraph>
+            ) : (
+              <Paragraph>Failed to load wallet details.</Paragraph>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+
         {isLoading && (
           <Dialog visible={true}>
             <Dialog.Content>
