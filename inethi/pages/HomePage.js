@@ -21,6 +21,10 @@ import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
 import ServiceContainer from '../components/ServiceContainer';
+import * as amplitude from '@amplitude/analytics-react-native';
+import analytics from '@react-native-firebase/analytics';
+
+amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -41,6 +45,9 @@ const HomePage = ({logout}) => {
         action: () => navigate('/wallet-categories'),
         url: '', // Add an empty URL field to maintain structure
       },
+    ],
+    Navigator: [
+      { name: "FindHotspot", action: () => handleFindHotspotClick() },
     ],
   });
 

@@ -1,10 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {NativeRouter, Route, Routes} from 'react-router-native';
-import {Provider as PaperProvider} from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NativeRouter, Route, Routes, useLocation } from 'react-router-native';
+import { Provider as PaperProvider } from 'react-native-paper';
 import HomePage from './pages/HomePage';
-import NewModalNetworkStatus from './components/NewModalNetworkStatus';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
@@ -19,6 +18,38 @@ import ViewRecipientsScreen from './pages/ViewRecipients';
 import WalletCategoriesPage from './pages/Wallet';
 import RecipientDetailsScreen from './pages/RecipientDetails';
 import WalletDetailsPage from './pages/WalletDetails';
+import { vexo } from 'vexo-analytics';
+
+// You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
+vexo('707528fb-5be6-49d1-9a78-5afe749580cc');
+
+const AppRoutes = ({ logout, userToken, handleLoginSuccess, handleRegisterSuccess }) => {
+    const location = useLocation();
+    const hideAppBarRoutes = ['/map']; // Add routes here where AppBar should not be shown
+
+//     return (
+//         <>
+//             {!hideAppBarRoutes.includes(location.pathname) && <AppBarComponent logout={logout} />}
+//             <Routes>
+//                 {userToken ? (
+//                     <>
+//                         <Route exact path="/" element={<HomePage logout={logout} />} />
+//                         <Route path="/payment" element={<PaymentPage logout={logout} />} />
+//                         <Route path="/webview" element={<WebViewComponent />} />
+//                         <Route path="/container" element={<ServiceContainer />} />
+//                         <Route path="/appstore" element={<AppList />} />
+//                         <Route path="/map" element={<MapPage />} />
+//                     </>
+//                 ) : (
+//                     <>
+//                         <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+//                         <Route path="/register" element={<RegisterPage onLoginSuccess={handleLoginSuccess} onRegisterSuccess={handleRegisterSuccess} />} />
+//                     </>
+//                 )}
+//             </Routes>
+//         </>
+//     );
+// };
 
 const App = () => {
   const [userToken, setUserToken] = useState(null);
@@ -52,69 +83,46 @@ const App = () => {
 
   return (
     <PaperProvider>
-      <SafeAreaProvider>
-        <BalanceProvider logout={logout}>
-          <NativeRouter>
-            <AppBarComponent logout={logout} />
-            <Routes>
-              {userToken ? (
-                <>
-                  <Route
-                    exact
-                    path="/"
-                    element={<HomePage logout={logout} />}
-                  />
-                  <Route
-                    path="/payment"
-                    element={<PaymentPage logout={logout} />}
-                  />
-                  <Route path="/webview" element={<WebViewComponent />} />
-                  <Route path="/container" element={<ServiceContainer />} />
-                  <Route path="/appstore" element={<AppList />} />
-                  <Route
-                    path="/add-recipient"
-                    element={<AddRecipientScreen />}
-                  />
-                  <Route
-                    path="/view-recipients"
-                    element={<ViewRecipientsScreen />} // Add ViewRecipientsScreen route
-                  />
-                  <Route
-                    path="/wallet-categories"
-                    element={<WalletCategoriesPage />} // Add WalletCategoriesPage route
-                  />
-                  <Route
-                    path="/recipient-details"
-                    element={<RecipientDetailsScreen />}
-                  />
-                  <Route
-                    path="/wallet-details"
-                    element={<WalletDetailsPage />}
-                  />
-                </>
-              ) : (
-                <>
-                  <Route
-                    path="*"
-                    element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <RegisterPage
-                        onLoginSuccess={handleLoginSuccess}
-                        onRegisterSuccess={handleRegisterSuccess}
-                      />
-                    }
-                  />
-                </>
-              )}
-            </Routes>
-          </NativeRouter>
-        </BalanceProvider>
-      </SafeAreaProvider>
+        <SafeAreaProvider>
+            <BalanceProvider logout={logout}>
+                <NativeRouter>
+                    {/* Conditional rendering of AppBarComponent */}
+                    {!hideAppBarRoutes.includes(location.pathname) && <AppBarComponent logout={logout} />}
+                    <Routes>
+                        {userToken ? (
+                            <>
+                                <Route exact path="/" element={<HomePage logout={logout} />} />
+                                <Route path="/payment" element={<PaymentPage logout={logout} />} />
+                                <Route path="/webview" element={<WebViewComponent />} />
+                                <Route path="/container" element={<ServiceContainer />} />
+                                <Route path="/appstore" element={<AppList />} />
+                                <Route path="/map" element={<MapPage />} />
+                            </>
+                        ) : (
+                            <>
+                                <Route
+                                    path="*"
+                                    element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
+                                />
+                                <Route
+                                    path="/register"
+                                    element={
+                                        <RegisterPage
+                                            onLoginSuccess={handleLoginSuccess}
+                                            onRegisterSuccess={handleRegisterSuccess}
+                                        />
+                                    }
+                                />
+                            </>
+                        )}
+                    </Routes>
+                </NativeRouter>
+            </BalanceProvider>
+        </SafeAreaProvider>
     </PaperProvider>
-  );
+);
+
+}
 };
 
 export default App;
