@@ -2126,6 +2126,9 @@
   dependencies:
     merge-options "^3.0.4"
 
+"@react-native-clipboard/clipboard@^1.14.1":
+  version "1.14.1"
+
 "@react-native-community/cli-clean@12.3.7":
   version "12.3.7"
   resolved "https://registry.npmjs.org/@react-native-community/cli-clean/-/cli-clean-12.3.7.tgz"
@@ -2293,14 +2296,14 @@
   integrity sha512-/IYLHdoqeDqqGQMh9/qYgIReISBIu09lLNbrn70r98+IqQe9WFLuhAr/sdrDKxCUZDQyLqUc0p3rJ50VV0tR3g==
 
 "@react-native-firebase/analytics@^20.3.0":
-  version "20.3.0"
-  resolved "https://registry.npmjs.org/@react-native-firebase/analytics/-/analytics-20.3.0.tgz"
-  integrity sha512-viZWxZgTyv94t1qf8chXtC6YZyte4N0LxZspYJLjDeXGAMrLNGq8pku3rv7EY+bGJh5PWdc7pGHpbO4cIxcQkw==
+  version "20.4.0"
+  resolved "https://registry.npmjs.org/@react-native-firebase/analytics/-/analytics-20.4.0.tgz"
+  integrity sha512-z+f6J8qJmsdEKzJEd1WSPqS6al9pcgmtN+zokpnWntcIiN52+ckdZtV9qrrcgPFHO5dqFnG5zo+yu60OTKE70Q==
 
 "@react-native-firebase/app@^20.3.0":
-  version "20.3.0"
-  resolved "https://registry.npmjs.org/@react-native-firebase/app/-/app-20.3.0.tgz"
-  integrity sha512-vmlu3g59wk0C8SmunLOg+6fC99kUe+ZlfBc7h9zdcFbnK+/6XScqKkG8B0yP3ANjrk9ZqWL1+M705m/uoo/WCQ==
+  version "20.4.0"
+  resolved "https://registry.npmjs.org/@react-native-firebase/app/-/app-20.4.0.tgz"
+  integrity sha512-I3YswH5tq0kSezyFwyV0d3J+lnH+N/SdznFZ70Lr671X0YlrbEBb6BK7FzEiwq8rKeIPh+pbgnbYwzj/k9uEnQ==
   dependencies:
     firebase "10.12.2"
     superstruct "^0.6.2"
@@ -3259,9 +3262,7 @@ available-typed-arrays@^1.0.7:
     possible-typed-array-names "^1.0.0"
 
 axios@^1.6.8:
-  version "1.6.8"
-  resolved "https://registry.npmjs.org/axios/-/axios-1.6.8.tgz"
-  integrity sha512-v/ZHtJDU39mDpyBoFVkETcd/uNdxrWRrg3bKpOKzXFA6Bvqopts6ALSMU3y6ijYxbw2B+wPrIv46egTzJXCLGQ==
+  version "1.7.4"
   dependencies:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
@@ -4070,6 +4071,9 @@ diff-sequences@^29.6.3:
   resolved "https://registry.npmjs.org/diff-sequences/-/diff-sequences-29.6.3.tgz"
   integrity sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==
 
+dijkstrajs@^1.0.1:
+  version "1.0.3"
+
 dir-glob@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/dir-glob/-/dir-glob-3.0.1.tgz"
@@ -4140,6 +4144,9 @@ emoji-regex@^8.0.0:
   version "8.0.0"
   resolved "https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz"
   integrity sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==
+
+encode-utf8@^1.0.3:
+  version "1.0.3"
 
 encodeurl@~1.0.2:
   version "1.0.2"
@@ -4623,9 +4630,7 @@ fast-levenshtein@^2.0.6:
   integrity sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==
 
 fast-xml-parser@^4.0.12, fast-xml-parser@^4.2.4:
-  version "4.4.0"
-  resolved "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-4.4.0.tgz"
-  integrity sha512-kLY3jFlwIYwBNDojclKsNAC12sfD6NwW74QB2CoNGPvtVxjliYehVunB3HYyNi+n4Tt1dAcgwYvmKF/Z18flqg==
+  version "4.4.1"
   dependencies:
     strnum "^1.0.5"
 
@@ -7047,15 +7052,18 @@ pkg-dir@^4.2.0:
   dependencies:
     find-up "^4.0.0"
 
+pngjs@^5.0.0:
+  version "5.0.0"
+
 possible-typed-array-names@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.0.0.tgz"
   integrity sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==
 
 posthog-react-native@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.npmjs.org/posthog-react-native/-/posthog-react-native-3.1.1.tgz"
-  integrity sha512-t26bUkJNDJzl/qKA1VPNxbNYZSv/Htduny31yOWvphnXP67TwFmGjTmj66yo1NXY1o8kpokQY2VH3F8uxQOYqA==
+  version "3.1.2"
+  resolved "https://registry.npmjs.org/posthog-react-native/-/posthog-react-native-3.1.2.tgz"
+  integrity sha512-2yylwM6recNFF5uvx+TYzb2DDBgXDrLj7xqVY+mggwYn00vIkZD6E7d/LqmFhsH4ZqrMzORq8Xq5kWScLKSrgg==
 
 prelude-ls@^1.2.1:
   version "1.2.1"
@@ -7123,7 +7131,7 @@ prompts@^2.0.1, prompts@^2.4.2:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.7.2, prop-types@^15.8.1:
+prop-types@^15.7.2, prop-types@^15.8.0, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -7172,6 +7180,14 @@ pure-rand@^6.0.0:
   version "6.1.0"
   resolved "https://registry.npmjs.org/pure-rand/-/pure-rand-6.1.0.tgz"
   integrity sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==
+
+qrcode@^1.5.1:
+  version "1.5.3"
+  dependencies:
+    dijkstrajs "^1.0.1"
+    encode-utf8 "^1.0.3"
+    pngjs "^5.0.0"
+    yargs "^15.3.1"
 
 query-string@^7.1.3:
   version "7.1.3"
@@ -7331,6 +7347,13 @@ react-native-progress@^5.0.1:
   dependencies:
     prop-types "^15.7.2"
 
+react-native-qrcode-svg@^6.3.2:
+  version "6.3.2"
+  dependencies:
+    prop-types "^15.8.0"
+    qrcode "^1.5.1"
+    text-encoding "^0.7.0"
+
 react-native-redash@*:
   version "18.1.3"
   resolved "https://registry.npmjs.org/react-native-redash/-/react-native-redash-18.1.3.tgz"
@@ -7353,13 +7376,12 @@ react-native-screens@^3.32.0:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
-react-native-svg@^15.3.0:
-  version "15.3.0"
-  resolved "https://registry.npmjs.org/react-native-svg/-/react-native-svg-15.3.0.tgz"
-  integrity sha512-mBHu/fdlzUbpGX8SZFxgbKvK/sgqLfDLP8uh8G7Us+zJgdjO8OSEeqHQs+kPRdQmdLJQiqPJX2WXgCl7ToTWqw==
+react-native-svg@^15.5.0:
+  version "15.5.0"
   dependencies:
     css-select "^5.1.0"
     css-tree "^1.1.3"
+    warn-once "0.1.1"
 
 react-native-url-polyfill@^1.3.0:
   version "1.3.0"
@@ -7373,10 +7395,8 @@ react-native-uuid@^2.0.1:
   resolved "https://registry.npmjs.org/react-native-uuid/-/react-native-uuid-2.0.2.tgz"
   integrity sha512-5ypj/hV58P+6VREdjkW0EudSibsH3WdqDERoHKnD9syFWjF+NfRWWrJb2sa3LIwI5zpzMvUiabs+DX40WHpEMw==
 
-react-native-vector-icons@^10.1.0:
-  version "10.1.0"
-  resolved "https://registry.npmjs.org/react-native-vector-icons/-/react-native-vector-icons-10.1.0.tgz"
-  integrity sha512-fdQjCHIdoXmRoTZ5gvN1FmT4sGLQ2wmQiNZHKJQUYnE2tkIwjGnxNch+6Nd4lHAACvMWO7LOzBNot2u/zlOmkw==
+react-native-vector-icons@^10.0.3:
+  version "10.0.3"
   dependencies:
     prop-types "^15.7.2"
     yargs "^16.1.1"
@@ -8271,6 +8291,9 @@ test-exclude@^6.0.0:
     glob "^7.1.4"
     minimatch "^3.0.4"
 
+text-encoding@^0.7.0:
+  version "0.7.0"
+
 text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz"
@@ -8552,9 +8575,9 @@ vary@~1.1.2:
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
 
 vexo-analytics@^1.3.15:
-  version "1.3.15"
-  resolved "https://registry.npmjs.org/vexo-analytics/-/vexo-analytics-1.3.15.tgz"
-  integrity sha512-EHHI12XGnDmLEWKKikX7kGhTZlhXmQBHjjI+DLdohoKDyZmnM7w6jlY6kw8dDctKfCRrSFAbjOQCFimTcHkqhQ==
+  version "1.3.16"
+  resolved "https://registry.npmjs.org/vexo-analytics/-/vexo-analytics-1.3.16.tgz"
+  integrity sha512-G/rC4j5ZuZ9uh9T5QzRJS43JJKryLgqDQ17Hh6OO0G7yegouuIcLD+qbEUPS2WQN1YdNXByS1uaPinnf3g3ZZw==
   dependencies:
     async-mutex "^0.4.0"
     moment "^2.24.0"
@@ -8573,7 +8596,7 @@ walker@^1.0.7, walker@^1.0.8:
   dependencies:
     makeerror "1.0.12"
 
-warn-once@^0.1.0:
+warn-once@^0.1.0, warn-once@0.1.1:
   version "0.1.1"
   resolved "https://registry.npmjs.org/warn-once/-/warn-once-0.1.1.tgz"
   integrity sha512-VkQZJbO8zVImzYFteBXvBOZEl1qL175WH8VmZcxF2fZAoudNhNDvHi+doCaAEdU2l2vtcIwa2zn0QK5+I1HQ3Q==
@@ -8802,6 +8825,21 @@ yargs@^15.1.0:
   version "15.4.1"
   resolved "https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz"
   integrity sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==
+  dependencies:
+    cliui "^6.0.0"
+    decamelize "^1.2.0"
+    find-up "^4.1.0"
+    get-caller-file "^2.0.1"
+    require-directory "^2.1.1"
+    require-main-filename "^2.0.0"
+    set-blocking "^2.0.0"
+    string-width "^4.2.0"
+    which-module "^2.0.0"
+    y18n "^4.0.0"
+    yargs-parser "^18.1.2"
+
+yargs@^15.3.1:
+  version "15.4.1"
   dependencies:
     cliui "^6.0.0"
     decamelize "^1.2.0"

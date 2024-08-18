@@ -16,12 +16,14 @@ sudo update-alternatives --config javac
 3. Your user has the 'create_wallet' role.
 
 ## Running the code
-Make sure you have set your ANDROID_HOME environment variable before running. For example, on Linux:
+Make sure you have set your ANDROID_HOME and JAVA_HOME environment variables before running. For example, on Linux:
 
 ```
 export ANDROID_HOME=$HOME/Android/Sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64/
+export PATH=$JAVA_HOME/bin:$PATH
 ```
 
 To start the app run `npm start`
@@ -46,5 +48,3 @@ cd android
 ./gradlew assembleRelease
 ```
 4. Install it on connected device (if you have one): `adb install -r android/app/build/outputs/apk/release/app-release.apk` (from root dir) else for two `adb -s AIRKXG7TAMNZWKIB install -r android/app/build/outputs/apk/release/app-release.apk` where 'AIRKXG7TAMNZWKIB' is the device ID (check with `adb devices`)
-
-
