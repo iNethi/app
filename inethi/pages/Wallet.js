@@ -21,7 +21,7 @@ import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext';
 
 const WalletCategoriesPage = () => {
-  const baseURL = 'http://172.16.13.141:8000';
+  const baseURL = 'http://172.16.13.141:9000';
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';

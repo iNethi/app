@@ -9,7 +9,7 @@ import QRCode from 'react-native-qrcode-svg';
 const WalletDetailsPage = () => {
   const location = useLocation();
   const {walletAddress} = location.state || {};
-  const baseURL = 'http://172.16.13.141:8000';
+  const baseURL = 'http://172.16.13.141:9000';
   const walletDetailsEndpoint = `/wallet/${walletAddress}/qr_code/`;
 
   const [walletDetails, setWalletDetails] = useState(null);

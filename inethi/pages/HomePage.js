@@ -22,7 +22,7 @@ import {useBalance} from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
 
 const HomePage = ({logout}) => {
-  const baseURL = 'http://172.16.13.141:8000';
+  const baseURL = 'http://172.16.13.141:9000';
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const {balance, fetchBalance} = useBalance();
@@ -53,7 +53,7 @@ const HomePage = ({logout}) => {
         },
       };
 
-      const urlLocal = 'http://172.16.13.141:8000';
+      const urlLocal = 'http://172.16.13.141:9000';
       const urlGlobal =
         'https://manage-backend.inethicloud.net/service/list-by-type/';
 

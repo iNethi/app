@@ -15,7 +15,7 @@ import {handleLogin} from '../utils/utils';
 import {Dialog} from 'react-native-paper';
 
 const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
-  const baseURL = 'http://172.16.13.141:8000';
+  const baseURL = 'http://172.16.13.141:9000';
   //const baseURL = 'https://manage-backend.inethicloud.net';
   const registerEndpoint = '/user/keycloak/register/';
   const [username, setUsername] = useState('');
