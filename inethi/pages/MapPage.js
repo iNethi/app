@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Image, Text } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
@@ -33,6 +33,8 @@ const MapPage = () => {
     const [pinLocation, setPinLocation] = useState(null);
     const [dragging, setDragging] = useState(false);
     const [route, setRoute] = useState(null);
+    const [distanceToNode, setDistanceToNode] = useState(null);
+    const mapRef = useRef(null);
 
     const pingNode = async (ip) => {
         try {
@@ -167,6 +169,10 @@ const MapPage = () => {
             const response = await directionsClient.getDirections(request).send();
             const route = makeLineString(response.body.routes[0].geometry.coordinates);
             setRoute(route);
+
+            // Calculate the distance and update the state
+            const distance = calculateDistance(startCoordinates, endCoordinates);
+            setDistanceToNode(distance);
         } catch (error) {
             console.error('Error fetching directions: ', error);
         }
@@ -292,8 +298,6 @@ const MapPage = () => {
         setPinLocation(geometry.coordinates);
     };
 
-    const mapRef = React.useRef(null);
-
     useEffect(() => {
         const startTime = Date.now();
 
@@ -365,6 +369,16 @@ const MapPage = () => {
                     </TouchableOpacity>
                 </View>
             )}
+            {distanceToNode !== null && (
+                <View style={styles.distanceContainer}>
+                    <Text style={styles.distanceText}>
+                        {distanceToNode >= 1
+                            ? `${distanceToNode.toFixed(2)} km`
+                            : `${(distanceToNode * 1000).toFixed(0)} meters`}
+                        {' '}to nearest node
+                    </Text>
+                </View>
+            )}
         </View>
     );
 };
@@ -418,6 +432,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 50,
         padding: 10,
+    },
+    distanceContainer: {
+        position: 'absolute',
+        bottom: 80,  // Positioned above the zoom controls
+        left: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: 10,
+        borderRadius: 5,
+    },
+    distanceText: {
+        color: 'white',
+        fontSize: 16,
     },
 });
 
