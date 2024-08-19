@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import { View, StyleSheet, Image, ActivityIndicator, Alert, PermissionsAndroid, Platform } from 'react-native';
 import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
@@ -7,6 +7,7 @@ import { getToken } from '../utils/tokenUtils';
 import { useBalance } from '../context/BalanceContext'; // Import useBalance
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
+import RNFS from "react-native-fs"
 
 const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -24,7 +25,7 @@ const HomePage = ({ logout }) => {
   const [detailsError, setDetailsError] = useState('');
   const { balance, fetchBalance } = useBalance(); // Destructure balance and fetchBalance
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-
+  const [qrCodeRef, setQrCodeRef]  = useState(null);
   const [categories, setCategories] = useState({
     Wallet: [
       {
@@ -40,6 +41,63 @@ const HomePage = ({ logout }) => {
 
   const handleCreateWalletClick = () => {
     setIsCreateWalletDialogOpen(true);
+  };
+
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        if (Number(Platform.Version) >= 33) {
+          return true;
+        }
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: 'Storage Permission',
+              message: 'App needs access to your storage to save the QR code',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+        );
+        console.log(`Results... ${granted}`)
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    } else {
+      return true; // iOS does not need this permission
+    }
+  };
+
+// Function to download the QR code
+  const handleDownloadQrCode = async () => {
+    const hasPermission = await requestStoragePermission();
+
+    if (!hasPermission) {
+      alert('Permission to access storage was denied');
+      return;
+    }
+
+    try {
+      const svg = qrCodeRef;
+
+      if (svg) {
+        const filePath = `${RNFS.DownloadDirectoryPath}/qrcode.png`;
+
+        const svgData = await new Promise((resolve, reject) => {
+          svg.toDataURL((data) => {
+            resolve(data);
+          });
+        });
+
+        await RNFS.writeFile(filePath, svgData, 'base64');
+        alert(`QR code saved to ${filePath}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save QR code');
+    }
   };
 
   const handleCreateWallet = async () => {
@@ -85,10 +143,7 @@ const HomePage = ({ logout }) => {
     }
   };
 
-
-
   const checkWalletOwnership = async () => {
-
     try {
       const token = await getToken();
       if (!token) {
@@ -105,9 +160,7 @@ const HomePage = ({ logout }) => {
 
       const response = await axios.get(`${baseURL}${walletOwnershipEndpoint}`, config);
       setHasWallet(response.data.has_wallet);
-
     } catch (error) {
-
       console.error('Error checking wallet ownership:', error);
       if (error.response) {
         if (error.response.status === 401) {
@@ -145,7 +198,7 @@ const HomePage = ({ logout }) => {
           Alert.alert('Error', 'Authentication credentials were not provided.');
         } else if (error.response.status === 404) {
           Alert.alert('Error', 'User does not exist.');
-        }else if (error.response.status === 417) {
+        } else if (error.response.status === 417) {
           Alert.alert('Error', 'User does not have a wallet.');
         } else if (error.response.status === 500) {
           Alert.alert('Error', 'Error checking wallet details. Please contact iNethi support.');
@@ -225,6 +278,7 @@ const HomePage = ({ logout }) => {
       setError(`Failed to fetch services: ${err.message}`);
     }
   };
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -242,6 +296,7 @@ const HomePage = ({ logout }) => {
     };
     initialize();
   }, []);
+
   useEffect(() => {
     setCategories({
       Wallet: [
@@ -296,7 +351,6 @@ const HomePage = ({ logout }) => {
     return buttonRows;
   };
 
-
   const renderCategoryCards = () => (
       Object.entries(categories).map(([category, buttons], index) => (
           <Card key={index} style={styles.card}>
@@ -346,7 +400,16 @@ const HomePage = ({ logout }) => {
                     <QRCode
                         value={walletDetails.wallet_address}
                         size={200}
+                        getRef={(ref) => setQrCodeRef(ref)}
                     />
+
+                    <Button
+                        mode="contained"
+                        onPress={handleDownloadQrCode}
+                        style={styles.downloadButton}
+                    >
+                      Download QR Code
+                    </Button>
                     <View style={styles.walletAddressContainer}>
                       <Paragraph style={styles.walletAddress}>Wallet Address: {walletDetails.wallet_address}</Paragraph>
                       <IconButton
@@ -358,8 +421,6 @@ const HomePage = ({ logout }) => {
                           }}
                       />
                     </View>
-
-
                   </View>
               ) : detailsError ? (
                   <Paragraph>{detailsError}</Paragraph>
@@ -466,6 +527,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  downloadButton: {
+    marginTop: 20,
+  },
+
   walletAddress: {
     flex: 1,
   },
