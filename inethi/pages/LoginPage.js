@@ -1,4 +1,4 @@
-
+/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, TextInput, Button, Text, TouchableOpacity, ActivityIndicator, Alert,} from 'react-native';
 import axios from "axios";

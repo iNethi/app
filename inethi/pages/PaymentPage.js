@@ -1,13 +1,16 @@
+/* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigate } from 'react-router-native';
-import axios from "axios";
-import { Dialog } from "react-native-paper";
+import axios from 'axios';
+import { Dialog } from 'react-native-paper';
 import { getToken } from '../utils/tokenUtils';
 import { useBalance } from '../context/BalanceContext';
+import { Camera, useCameraDevice, useCameraPermission, useCodeScanner } from 'react-native-vision-camera';
 
 const PaymentPage = () => {
+    const device = useCameraDevice('back');
     const baseURL = 'https://manage-backend.inethicloud.net';
     const walletSendEndpoint = '/wallet/send-token/';
     const navigate = useNavigate();
@@ -18,6 +21,17 @@ const PaymentPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const { hasPermission, requestPermission } = useCameraPermission();
+    const codeScanner = useCodeScanner({
+        codeTypes: ['qr', 'ean-13'],
+        onCodeScanned: (codes) => {
+            if (codes.length > 0) {
+                setReceiver(codes[0].value); // Fill the wallet address with the scanned code
+                setIsScannerOpen(false); // Exit the scanner
+            }
+        },
+    });
 
     const handleSendPayment = async () => {
         if (!receiver || !amount) {
@@ -81,7 +95,7 @@ const PaymentPage = () => {
 
     useEffect(() => {
         fetchBalance(); // Fetch balance when the page loads
-    }, []);
+    }, [fetchBalance]);
 
     useEffect(() => {
         if (receiver && amount) {
@@ -91,53 +105,81 @@ const PaymentPage = () => {
         }
     }, [receiver, amount]);
 
+    const openScanner = async () => {
+        console.log('opening camera');
+        const permission = await requestPermission();
+        if (permission) {
+            setIsScannerOpen(true);
+        } else {
+            Alert.alert('Camera Permission', 'Camera permission is required to scan QR codes.');
+        }
+    };
+
+
     return (
-        <View style={styles.container}>
-            <View style={styles.balanceContainer}>
-                <Text style={styles.balanceText}>Your Balance: {balance}</Text>
-            </View>
-            <View style={styles.formContainer}>
-                <Text style={styles.title}>Make a Payment</Text>
-                <Picker
-                    selectedValue={paymentMethod}
-                    style={styles.picker}
-                    onValueChange={(itemValue) => setPaymentMethod(itemValue)}
-                >
-                    <Picker.Item label="Username" value="username" />
-                    <Picker.Item label="Wallet Address" value="walletAddress" />
-                </Picker>
-                <TextInput
-                    style={styles.input}
-                    onChangeText={setReceiver}
-                    value={receiver}
-                    placeholder={paymentMethod === 'username' ? 'Username of receiver' : 'Wallet address'}
+      <View style={styles.container}>
+          {isScannerOpen && device ? (
+            <>
+                <Camera
+                  style={{ flex: 1, width: '100%' }}
+                  device={device}
+                  isActive={isScannerOpen}
+                  codeScanner={codeScanner}
                 />
-                <TextInput
-                    style={styles.input}
-                    onChangeText={setAmount}
-                    value={amount}
-                    placeholder="Amount"
-                    keyboardType="numeric"
-                />
+                <Button title="Exit Scanner" onPress={() => setIsScannerOpen(false)} />
+            </>
+          ) : (
+            <>
+                <View style={styles.balanceContainer}>
+                    <Text style={styles.balanceText}>Your Balance: {balance}</Text>
+                </View>
+                <View style={styles.formContainer}>
+                    <Text style={styles.title}>Make a Payment</Text>
+                    <Picker
+                      selectedValue={paymentMethod}
+                      style={styles.picker}
+                      onValueChange={(itemValue) => setPaymentMethod(itemValue)}
+                    >
+                        <Picker.Item label="Username" value="username" />
+                        <Picker.Item label="Wallet Address" value="walletAddress" />
+                    </Picker>
+                    {paymentMethod === 'walletAddress' && (
+                      <Button title="Scan QR Code" onPress={openScanner} />
+                    )}
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={setReceiver}
+                      value={receiver}
+                      placeholder={paymentMethod === 'username' ? 'Username of receiver' : 'Wallet address'}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={setAmount}
+                      value={amount}
+                      placeholder="Amount"
+                      keyboardType="numeric"
+                    />
+                    <Button
+                      title="Send Payment"
+                      onPress={handleSendPayment}
+                      disabled={isButtonDisabled}
+                    />
+                    {isLoading && (
+                      <Dialog visible={true}>
+                          <Dialog.Content>
+                              <ActivityIndicator size="large" />
+                          </Dialog.Content>
+                      </Dialog>
+                    )}
+                </View>
                 <Button
-                    title="Send Payment"
-                    onPress={handleSendPayment}
-                    disabled={isButtonDisabled}
-                />
-                {isLoading && (
-                    <Dialog visible={true}>
-                        <Dialog.Content>
-                            <ActivityIndicator size="large" />
-                        </Dialog.Content>
-                    </Dialog>
-                )}
-            </View>
-            <Button
-                title="Go Back"
-                onPress={() => navigate(-1)}
-                style={styles.backButton}
-            >Go Back</Button>
-        </View>
+                  title="Go Back"
+                  onPress={() => navigate(-1)}
+                  style={styles.backButton}
+                >Go Back</Button>
+            </>
+          )}
+      </View>
     );
 };
 

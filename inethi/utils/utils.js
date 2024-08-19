@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import axios from 'axios';
 
 export const handleLogin = async (username, password, onLoginSuccess, setError, setLoading, navigate) => {

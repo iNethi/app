@@ -1,9 +1,10 @@
+/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, TextInput, Button, Text, TouchableOpacity, ActivityIndicator, Alert} from 'react-native';
 import axios from 'axios';
 import { useNavigate } from 'react-router-native';
-import { handleLogin} from "../utils/utils";
-import {Dialog} from "react-native-paper";
+import { handleLogin} from '../utils/utils';
+import {Dialog} from 'react-native-paper';
 
 const RegisterPage = ({ onRegisterSuccess, onLoginSuccess }) => {
     const baseURL = 'https://manage-backend.inethicloud.net';
@@ -31,7 +32,7 @@ const RegisterPage = ({ onRegisterSuccess, onLoginSuccess }) => {
                 password: password,
             }, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 }
             });
 
@@ -69,7 +70,7 @@ const RegisterPage = ({ onRegisterSuccess, onLoginSuccess }) => {
         } else {
             setIsButtonDisabled(true);
         }
-    }, [password, password, confirmPassword]);
+    }, [password, confirmPassword, username]);
 
     return (
         <View style={styles.container}>
@@ -92,7 +93,7 @@ const RegisterPage = ({ onRegisterSuccess, onLoginSuccess }) => {
                     style={styles.showPasswordButton}
                     onPress={() => setShowPassword(!showPassword)}
                 >
-                    <Text>{showPassword ? "Hide" : "Show"}</Text>
+                    <Text>{showPassword ? 'Hide' : 'Show'}</Text>
                 </TouchableOpacity>
             </View>
             <TextInput

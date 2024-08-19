@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, {useState, useEffect, useRef} from 'react';
 import { View, StyleSheet, Image, ActivityIndicator, Alert, PermissionsAndroid, Platform } from 'react-native';
 import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
@@ -7,9 +8,10 @@ import { getToken } from '../utils/tokenUtils';
 import { useBalance } from '../context/BalanceContext'; // Import useBalance
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import RNFS from "react-native-fs"
+import RNFS from 'react-native-fs';
 
-const HomePage = ({ logout }) => {
+
+const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';

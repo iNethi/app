@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
